@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+
+
+.outfit- {
+  font-family: "Outfit", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.prata-regular {
+  font-family: "Prata", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+::-webkit-scrollbar{
+  display:none
+}
+
+
+.no-spinner::-webkit-inner-spin-button,
+.no-spinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+
+
+@media (max-width:640px) {
+  a.active{
+    background-color: black;
+    color: white;
+  }
+}
+
+
+
+

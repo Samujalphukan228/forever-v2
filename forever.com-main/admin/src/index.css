@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+select,input,textarea{
+    border:1px solid #c2c2c2;
+    outline-color: #000000;
+    border-radius: 4px;
+}
+
+select,
+input,
+textarea {
+  border: 1px solid #c2c2c2;
+  border-radius: 4px;
+}
+
+
+/* Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+
+.no-spinner::-webkit-inner-spin-button,
+.no-spinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
