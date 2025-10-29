@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FiMenu, FiX, FiPackage, FiList, FiShoppingCart, FiLogOut, FiHome } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 
-const NavBar = ({ setToken }) => {
+const NavBar = ({ setAdminToken, setSidebarOpen }) => {
   const [isNavOpen, setIsNavOpen] = useState(false);
 
   const navItems = [
@@ -12,9 +12,20 @@ const NavBar = ({ setToken }) => {
   ];
 
   const handleLogout = () => {
-    setToken("");
+    console.log("Logging out..."); // Debug
+    
+    // Clear token from state
+    setAdminToken("");
+    
+    // Clear all tokens from localStorage
     localStorage.removeItem("adminToken");
+    localStorage.removeItem("token");
+    
+    // Close mobile menu
     setIsNavOpen(false);
+    
+    // Force page reload to reset all state
+    window.location.href = "/";
   };
 
   return (
@@ -127,7 +138,7 @@ const NavBar = ({ setToken }) => {
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-3 rounded-xl font-semibold hover:from-red-600 hover:to-red-700 transition-all shadow-md"
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-3 rounded-xl font-semibold hover:from-red-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg"
           >
             <FiLogOut className="text-lg" />
             Logout

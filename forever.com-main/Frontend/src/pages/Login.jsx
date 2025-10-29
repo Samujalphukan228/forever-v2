@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
 import { ShopContext } from "../context/ShopContext";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -19,8 +19,23 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  // ✅ Use useCallback to prevent function recreation
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  // ✅ Reset form when state changes
+  useEffect(() => {
+    setFormData({
+      name: "",
+      email: "",
+      password: "",
+      otp: "",
+      newPassword: "",
+    });
+    setShowPassword(false);
+  }, [currentState]);
 
   // Submit logic
   const onSubmitHandler = async (e) => {
@@ -110,33 +125,6 @@ const Login = () => {
     if (token) navigate("/");
   }, [token]);
 
-  const InputField = ({ type, name, placeholder, required = true }) => (
-    <div className="relative">
-      <input
-        type={
-          (name === "password" || name === "newPassword") && showPassword
-            ? "text"
-            : type
-        }
-        name={name}
-        value={formData[name]}
-        onChange={handleChange}
-        placeholder={placeholder}
-        required={required}
-        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
-          focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
-      />
-      {(name === "password" || name === "newPassword") && (
-        <div
-          className="absolute right-4 top-3 cursor-pointer text-gray-600 hover:text-black"
-          onClick={() => setShowPassword(!showPassword)}
-        >
-          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <div className="min-h-screen flex justify-center items-center bg-white px-4">
       <form
@@ -169,39 +157,165 @@ const Login = () => {
         {/* Fields */}
         {currentState === "Sign Up" && (
           <>
-            <InputField type="text" name="name" placeholder="Full Name" />
-            <InputField type="email" name="email" placeholder="Email Address" />
-            <InputField type="password" name="password" placeholder="Password" />
+            {/* Name Input */}
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Full Name"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
+                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
+            />
+            
+            {/* Email Input */}
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Email Address"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
+                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
+            />
+            
+            {/* Password Input with Eye Toggle */}
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
+                  focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
+              />
+              <div
+                className="absolute right-4 top-3 cursor-pointer text-gray-600 hover:text-black"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </div>
+            </div>
           </>
         )}
 
         {currentState === "Verify OTP" && (
           <>
-            <InputField type="email" name="email" placeholder="Email Address" />
-            <InputField type="text" name="otp" placeholder="Enter OTP" />
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Email Address"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
+                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
+            />
+            <input
+              type="text"
+              name="otp"
+              value={formData.otp}
+              onChange={handleChange}
+              placeholder="Enter OTP"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
+                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
+            />
           </>
         )}
 
         {currentState === "Login" && (
           <>
-            <InputField type="email" name="email" placeholder="Email Address" />
-            <InputField type="password" name="password" placeholder="Password" />
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Email Address"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
+                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
+            />
+            
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
+                  focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
+              />
+              <div
+                className="absolute right-4 top-3 cursor-pointer text-gray-600 hover:text-black"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </div>
+            </div>
           </>
         )}
 
         {currentState === "Forgot Password" && (
-          <InputField type="email" name="email" placeholder="Email Address" />
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Email Address"
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
+              focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
+          />
         )}
 
         {currentState === "Reset Password" && (
           <>
-            <InputField type="email" name="email" placeholder="Email Address" />
-            <InputField type="text" name="otp" placeholder="Enter OTP" />
-            <InputField
-              type="password"
-              name="newPassword"
-              placeholder="New Password"
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Email Address"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
+                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
             />
+            <input
+              type="text"
+              name="otp"
+              value={formData.otp}
+              onChange={handleChange}
+              placeholder="Enter OTP"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
+                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
+            />
+            
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="newPassword"
+                value={formData.newPassword}
+                onChange={handleChange}
+                placeholder="New Password"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
+                  focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
+              />
+              <div
+                className="absolute right-4 top-3 cursor-pointer text-gray-600 hover:text-black"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </div>
+            </div>
           </>
         )}
 
@@ -213,7 +327,7 @@ const Login = () => {
                 onClick={() => setCurrentState("Sign Up")}
                 className="cursor-pointer hover:text-black transition"
               >
-                Don’t have an account?{" "}
+                Don't have an account?{" "}
                 <span className="font-medium">Sign Up</span>
               </p>
               <p

@@ -1,11 +1,11 @@
 import { NavLink } from "react-router-dom";
 import { FiPackage, FiList, FiShoppingCart, FiTrendingUp, FiHome } from "react-icons/fi";
 
-const SideBar = () => {
+const SideBar = ({ isOpen, setIsOpen }) => {
   const navItems = [
-    { to: "/add", label: "Add Items", icon: FiPackage, color: "from-blue-500 to-indigo-600" },
-    { to: "/list", label: "List Items", icon: FiList, color: "from-purple-500 to-pink-600" },
-    { to: "/orders", label: "Orders", icon: FiShoppingCart, color: "from-orange-500 to-red-600" },
+    { to: "/add", label: "Add Items", icon: FiPackage },
+    { to: "/list", label: "List Items", icon: FiList },
+    { to: "/orders", label: "Orders", icon: FiShoppingCart },
   ];
 
   return (
@@ -32,7 +32,7 @@ const SideBar = () => {
           Main Menu
         </p>
         
-        {navItems.map(({ to, label, icon: Icon, color }) => (
+        {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
