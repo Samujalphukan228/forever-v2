@@ -105,4 +105,5 @@ const ProductSkeleton = () => (
     </div>
 )
 
+
 export default BestSeller
