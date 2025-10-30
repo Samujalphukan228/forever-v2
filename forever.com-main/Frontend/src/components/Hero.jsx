@@ -40,7 +40,7 @@ const Hero = () => {
   return (
     <>
       {/* Mobile Layout */}
-      <section className="md:hidden relative flex flex-col items-center justify-center min-h-screen px-4 bg-white">
+      <section className="md:hidden relative flex flex-col items-center justify-center px-4 py-10 bg-white">
         <motion.div
           className="w-full overflow-hidden rounded-lg mb-6"
           variants={imageVariants}
@@ -50,12 +50,12 @@ const Hero = () => {
           <img
             src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80"
             alt="Luxury Earrings Collection"
-            className="w-full h-64 object-cover"
+            className="w-full h-60 object-cover"
           />
         </motion.div>
 
         <motion.h1
-          className="text-2xl font-light text-gray-950 mb-2 text-center"
+          className="text-3xl font-light text-gray-950 mb-3 text-center"
           variants={fadeUp}
           custom={0}
           initial="hidden"
@@ -65,17 +65,17 @@ const Hero = () => {
         </motion.h1>
 
         <motion.p
-          className="text-xs text-gray-600 text-center mb-6 leading-relaxed font-light max-w-sm"
+          className="text-sm text-gray-600 text-center mb-6 leading-relaxed font-light max-w-sm"
           variants={fadeUp}
           custom={1}
           initial="hidden"
           animate={loaded ? "visible" : "hidden"}
         >
-          Handcrafted pieces that capture elegance and sophistication
+          Handcrafted pieces that capture elegance and sophistication.
         </motion.p>
 
         <motion.div
-          className="flex flex-col gap-2 w-full"
+          className="flex flex-col gap-3 w-full"
           variants={fadeUp}
           custom={2}
           initial="hidden"
@@ -93,7 +93,7 @@ const Hero = () => {
             href="/About"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="px-6 py-3 border-2 border-gray-900 text-gray-900 text-xs uppercase tracking-wider font-semibold text-center rounded-md hover:bg-gray-900 hover:text-white transition-all"
+            className="px-6 py-3 border border-gray-900 text-gray-900 text-xs uppercase tracking-wider font-semibold text-center rounded-md hover:bg-gray-900 hover:text-white transition-all"
           >
             Learn More
           </motion.a>
@@ -101,24 +101,24 @@ const Hero = () => {
       </section>
 
       {/* Desktop Layout */}
-      <section className="hidden md:flex relative flex-col items-center justify-center min-h-screen px-6 py-12 lg:py-14 text-center bg-white">
-        <div className="max-w-5xl mx-auto w-full">
+      <section className="hidden md:flex relative flex-col items-center justify-center px-6 py-20 lg:py-24 text-center bg-white">
+        <div className="max-w-4xl mx-auto w-full">
           {/* Heading */}
           <motion.div
-            className="mb-6 lg:mb-8"
+            className="mb-4"
             variants={fadeUp}
             custom={0}
             initial="hidden"
             animate={loaded ? "visible" : "hidden"}
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-gray-950 tracking-tight leading-tight">
+            <h1 className="text-5xl lg:text-6xl font-light text-gray-950 tracking-tight leading-tight">
               Timeless <span className="italic font-normal">Earrings</span>
             </h1>
           </motion.div>
 
           {/* Divider */}
           <motion.div
-            className="w-12 h-1 bg-gray-950 mx-auto mb-6 lg:mb-7"
+            className="w-10 h-[2px] bg-gray-950 mx-auto mb-6"
             variants={fadeUp}
             custom={0.4}
             initial="hidden"
@@ -127,7 +127,7 @@ const Hero = () => {
 
           {/* Description */}
           <motion.p
-            className="text-sm md:text-base lg:text-lg text-gray-700 font-light leading-relaxed max-w-2xl mx-auto mb-8 lg:mb-10"
+            className="text-base lg:text-lg text-gray-700 font-light leading-relaxed max-w-2xl mx-auto mb-10"
             variants={fadeUp}
             custom={1}
             initial="hidden"
@@ -138,7 +138,7 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <motion.div
-            className="flex justify-center gap-4 mb-10 lg:mb-12"
+            className="flex justify-center gap-4 mb-14"
             variants={fadeUp}
             custom={2}
             initial="hidden"
@@ -148,7 +148,7 @@ const Hero = () => {
               href="/Collection"
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
-              className="inline-flex items-center gap-2 px-8 py-3 bg-gray-950 text-white text-xs uppercase tracking-wider font-semibold rounded-md hover:bg-gray-800 transition-all shadow-sm hover:shadow-md"
+              className="inline-flex items-center gap-2 px-8 py-3 bg-gray-950 text-white text-xs uppercase tracking-wider font-semibold rounded-md hover:bg-gray-800 transition-all shadow-sm"
             >
               Explore Collection
               <FiArrowRight className="w-4 h-4" />
@@ -157,7 +157,7 @@ const Hero = () => {
               href="/About"
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
-              className="px-8 py-3 border-2 border-gray-950 text-gray-950 text-xs uppercase tracking-wider font-semibold rounded-md hover:bg-gray-950 hover:text-white transition-all"
+              className="px-8 py-3 border border-gray-950 text-gray-950 text-xs uppercase tracking-wider font-semibold rounded-md hover:bg-gray-950 hover:text-white transition-all"
             >
               Discover More
             </motion.a>
@@ -166,7 +166,7 @@ const Hero = () => {
 
         {/* Hero Image */}
         <motion.div
-          className="w-full overflow-hidden rounded-lg shadow-lg max-w-5xl"
+          className="w-full max-w-5xl overflow-hidden rounded-lg shadow-md"
           variants={imageVariants}
           initial="hidden"
           animate={loaded ? "visible" : "hidden"}
@@ -175,9 +175,9 @@ const Hero = () => {
             <img
               src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=1800&q=90"
               alt="Luxury Earrings Collection"
-              className="w-full h-80 md:h-96 lg:h-[420px] object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-[420px] object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/0 to-transparent group-hover:from-black/10 transition-all duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent transition-all duration-500" />
           </div>
         </motion.div>
       </section>
