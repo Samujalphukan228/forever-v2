@@ -3,7 +3,6 @@ import { ShopContext } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
 import { FiTruck, FiShield, FiLock, FiPercent, FiX, FiArrowRight } from 'react-icons/fi';
 
-
 const CartTotal = ({ showCheckoutButton = true }) => {
   const { currency, delivery_fee, getCartAmount, cartItems } = useContext(ShopContext);
   const navigate = useNavigate();
