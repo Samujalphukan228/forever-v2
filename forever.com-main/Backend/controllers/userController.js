@@ -6,7 +6,7 @@ import nodemailer from "nodemailer";
 
 // -----------------------------
 // JWT token generator
-// ------------------------------
+// -----------------------------
 const createToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
