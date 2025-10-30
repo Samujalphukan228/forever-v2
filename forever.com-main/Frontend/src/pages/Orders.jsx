@@ -50,7 +50,7 @@ const Orders = () => {
 
   useEffect(() => {
     loadOrderData();
-  }, [token]);
+  }, [token]); 
 
   if (!token) return <p className="p-4 text-gray-700">You must be logged in to see your orders.</p>;
   if (loading) return <p className="p-4 text-gray-700">Loading orders...</p>;

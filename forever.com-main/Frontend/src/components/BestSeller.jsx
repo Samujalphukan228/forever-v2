@@ -12,6 +12,7 @@ const GRID_COLS = {
     lg: 'lg:grid-cols-5'
 }
 
+
 const BestSeller = () => {
     const { products, loading, error } = useContext(ShopContext)
     const [bestSeller, setBestSeller] = useState([])
@@ -104,5 +105,6 @@ const ProductSkeleton = () => (
         <div className='h-4 bg-gray-200 rounded w-1/2'></div>
     </div>
 )
+
 
 export default BestSeller
