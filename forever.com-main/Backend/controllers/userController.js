@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 
-// ------------------------------
+// -----------------------------
 // JWT token generator
 // ------------------------------
 const createToken = (id) =>
