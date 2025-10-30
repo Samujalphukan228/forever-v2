@@ -17,6 +17,7 @@ const ShopContextProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState({});
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userOrders, setUserOrders] = useState([]); // ✅ Add this
   const navigate = useNavigate();
 
   // --------------------------
@@ -33,12 +34,12 @@ const ShopContextProvider = ({ children }) => {
         setLoading(false);
       }
     } catch (error) {
-      toast.error(error.message);
+      console.error("Product fetch error:", error);
+      toast.error(error.response?.data?.message || "Failed to load products");
       setLoading(false);
     }
   };
 
-  // Preload images
   const preloadImages = (products) => {
     const images = products
       .map((p) => (Array.isArray(p.image) ? p.image[0] : p.image))
@@ -94,7 +95,8 @@ const ShopContextProvider = ({ children }) => {
           { headers: { token } }
         );
       } catch (error) {
-        toast.error(error.message);
+        console.error("Add to cart error:", error);
+        toast.error(error.response?.data?.message || "Failed to add to cart");
       }
     }
   };
@@ -118,7 +120,8 @@ const ShopContextProvider = ({ children }) => {
           { headers: { token } }
         );
       } catch (error) {
-        toast.error(error.message);
+        console.error("Update quantity error:", error);
+        toast.error(error.response?.data?.message || "Failed to update cart");
       }
     }
   };
@@ -132,7 +135,8 @@ const ShopContextProvider = ({ children }) => {
       );
       if (response.data.success) setCartItems(response.data.cartData);
     } catch (error) {
-      toast.error(error.message);
+      console.error("Get cart error:", error);
+      toast.error(error.response?.data?.message || "Failed to load cart");
     }
   };
 
@@ -149,25 +153,36 @@ const ShopContextProvider = ({ children }) => {
   };
 
   // --------------------------
-  // 🔹 Place Order Function
+  // 🔹 Order Functions
   // --------------------------
+  
+  // ✅ Place Order (COD with OTP)
   const placeOrder = async (address) => {
-    if (!token) return toast.error("Please login to place an order");
+    if (!token) {
+      toast.error("Please login to place an order");
+      navigate("/login");
+      return { success: false };
+    }
 
     const items = Object.entries(cartItems)
       .map(([id, qty]) => {
         const product = products.find((p) => p._id === id);
         if (!product) return null;
         return {
-          productId: id,
+          _id: id, // ✅ Include product ID
           name: product.name,
           quantity: qty,
           price: product.price,
+          image: product.image, // ✅ Include image for order display
+          size: product.size || null, // ✅ Include size if exists
         };
       })
       .filter((item) => item !== null);
 
-    if (items.length === 0) return toast.error("Your cart is empty!");
+    if (items.length === 0) {
+      toast.error("Your cart is empty!");
+      return { success: false };
+    }
 
     try {
       const response = await axios.post(
@@ -181,16 +196,139 @@ const ShopContextProvider = ({ children }) => {
       );
 
       if (response.data.success) {
-        toast.success("Order placed successfully!");
-        setCartItems({});
+        toast.info("📧 OTP sent to your email. Please check and verify.");
+        return { 
+          success: true,
+          orderId: response.data.orderId, 
+          requiresOtp: true 
+        };
+      } else {
+        toast.error(response.data.message);
+        return { success: false };
+      }
+    } catch (error) {
+      console.error("Place order error:", error);
+      toast.error(error.response?.data?.message || "Failed to place order");
+      return { success: false };
+    }
+  };
+
+  // ✅ Verify Order OTP
+  const verifyOrderOtp = async (orderId, otp) => {
+    if (!token) {
+      toast.error("Authentication required");
+      return false;
+    }
+
+    try {
+      const response = await axios.post(
+        `${backendUrl}/api/order/verify-otp`,
+        { orderId, otp },
+        { headers: { token } }
+      );
+
+      if (response.data.success) {
+        toast.success("✅ Order confirmed successfully!");
+        setCartItems({}); // Clear cart
+        await fetchUserOrders(); // ✅ Refresh orders
         navigate("/orders");
+        return true;
+      } else {
+        toast.error(response.data.message);
+        return false;
+      }
+    } catch (error) {
+      console.error("Verify OTP error:", error);
+      toast.error(error.response?.data?.message || "OTP verification failed");
+      return false;
+    }
+  };
+
+  // ✅ Resend Order OTP
+  const resendOrderOtp = async (orderId) => {
+    if (!token) {
+      toast.error("Authentication required");
+      return false;
+    }
+
+    try {
+      const response = await axios.post(
+        `${backendUrl}/api/order/resend-otp`,
+        { orderId },
+        { headers: { token } }
+      );
+
+      if (response.data.success) {
+        toast.success("📧 New OTP sent to your email");
+        return true;
+      } else {
+        toast.error(response.data.message);
+        return false;
+      }
+    } catch (error) {
+      console.error("Resend OTP error:", error);
+      toast.error(error.response?.data?.message || "Failed to resend OTP");
+      return false;
+    }
+  };
+
+  // ✅ Get User Orders
+  const fetchUserOrders = async () => {
+    if (!token) return;
+
+    try {
+      const response = await axios.post(
+        `${backendUrl}/api/order/userorders`,
+        {},
+        { headers: { token } }
+      );
+
+      if (response.data.success) {
+        setUserOrders(response.data.orders);
       } else {
         toast.error(response.data.message);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      console.error("Fetch orders error:", error);
+      toast.error(error.response?.data?.message || "Failed to load orders");
     }
   };
+
+  // ✅ Cancel Order
+  const cancelOrder = async (orderId) => {
+    if (!token) {
+      toast.error("Authentication required");
+      return false;
+    }
+
+    try {
+      const response = await axios.post(
+        `${backendUrl}/api/order/cancel`,
+        { orderId },
+        { headers: { token } }
+      );
+
+      if (response.data.success) {
+        toast.success("Order cancelled successfully");
+        await fetchUserOrders(); // Refresh orders
+        return true;
+      } else {
+        toast.error(response.data.message);
+        return false;
+      }
+    } catch (error) {
+      console.error("Cancel order error:", error);
+      toast.error(error.response?.data?.message || "Failed to cancel order");
+      return false;
+    }
+  };
+
+  // ✅ Fetch orders when token is available
+  useEffect(() => {
+    if (token) {
+      fetchUserOrders();
+    }
+  }, [token]);
 
   // --------------------------
   // 🔹 Product Review Functions
@@ -207,28 +345,37 @@ const ShopContextProvider = ({ children }) => {
         return null;
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      console.error("Get product error:", error);
+      toast.error(error.response?.data?.message || "Failed to load product");
       return null;
     }
   };
 
   const addProductReview = async (productId, rating, comment) => {
-    if (!token) return toast.error("Please login to add a review");
+    if (!token) {
+      toast.error("Please login to add a review");
+      return false;
+    }
+
     try {
       const response = await axios.post(
         `${backendUrl}/api/product/review`,
         { productId, rating, comment },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { token } } // ✅ Fixed: Use 'token' instead of 'Authorization: Bearer'
       );
 
       if (response.data.success) {
         toast.success("Review added successfully!");
-        getProductData();
+        await getProductData(); // Refresh products
+        return true;
       } else {
         toast.error(response.data.message);
+        return false;
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      console.error("Add review error:", error);
+      toast.error(error.response?.data?.message || "Failed to add review");
+      return false;
     }
   };
 
@@ -243,14 +390,15 @@ const ShopContextProvider = ({ children }) => {
         password,
       });
       if (response.data.success) {
-        toast.success("OTP sent to your email");
+        toast.success("📧 OTP sent to your email");
         return true;
       } else {
         toast.error(response.data.message);
         return false;
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      console.error("Register error:", error);
+      toast.error(error.response?.data?.message || "Registration failed");
       return false;
     }
   };
@@ -264,7 +412,7 @@ const ShopContextProvider = ({ children }) => {
       if (response.data.success) {
         localStorage.setItem("token", response.data.token);
         setToken(response.data.token);
-        toast.success("Account verified successfully!");
+        toast.success("✅ Account verified successfully!");
         navigate("/");
         return true;
       } else {
@@ -272,7 +420,8 @@ const ShopContextProvider = ({ children }) => {
         return false;
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      console.error("Verify OTP error:", error);
+      toast.error(error.response?.data?.message || "Verification failed");
       return false;
     }
   };
@@ -289,13 +438,18 @@ const ShopContextProvider = ({ children }) => {
         setToken(response.data.token);
         toast.success("Login successful");
         navigate("/");
+        return true;
       } else if (response.data.success && !response.data.token) {
-        toast.info("OTP sent to your email for login");
+        toast.info("📧 OTP sent to your email");
+        return "otp_sent";
       } else {
         toast.error(response.data.message);
+        return false;
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      console.error("Login error:", error);
+      toast.error(error.response?.data?.message || "Login failed");
+      return false;
     }
   };
 
@@ -310,11 +464,15 @@ const ShopContextProvider = ({ children }) => {
         setToken(response.data.token);
         toast.success("Login successful");
         navigate("/");
+        return true;
       } else {
         toast.error(response.data.message);
+        return false;
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      console.error("Verify login OTP error:", error);
+      toast.error(error.response?.data?.message || "Verification failed");
+      return false;
     }
   };
 
@@ -325,14 +483,15 @@ const ShopContextProvider = ({ children }) => {
         { email }
       );
       if (response.data.success) {
-        toast.success("Password reset OTP sent to your email");
+        toast.success("📧 Password reset OTP sent to your email");
         return true;
       } else {
         toast.error(response.data.message);
         return false;
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      console.error("Forgot password error:", error);
+      toast.error(error.response?.data?.message || "Failed to send OTP");
       return false;
     }
   };
@@ -352,7 +511,8 @@ const ShopContextProvider = ({ children }) => {
         return false;
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      console.error("Reset password error:", error);
+      toast.error(error.response?.data?.message || "Password reset failed");
       return false;
     }
   };
@@ -360,6 +520,8 @@ const ShopContextProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("token");
     setToken("");
+    setCartItems({});
+    setUserOrders([]);
     navigate("/login");
     toast.success("Logged out successfully");
   };
@@ -395,7 +557,14 @@ const ShopContextProvider = ({ children }) => {
     loading,
     getSingleProduct,
     addProductReview,
-    placeOrder, // ✅ Added order placement here
+    
+    // ✅ Order Functions
+    placeOrder,
+    verifyOrderOtp,
+    resendOrderOtp,     // ✅ Added
+    fetchUserOrders,    // ✅ Added
+    cancelOrder,        // ✅ Added
+    userOrders,         // ✅ Added
   };
 
   return (

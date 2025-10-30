@@ -7,36 +7,44 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
     items: {
-        type: Array,
-        required: true
+      type: Array,
+      required: true,
     },
     amount: {
-        type: Number,
-        required: true
+      type: Number,
+      required: true,
     },
     address: {
-        type: Object,
-        required: true
+      type: Object,
+      required: true,
     },
     status: {
-        type: String,
-        required: true,
-        default: "Order placed"
+      type: String,
+      required: true,
+      default: "Order placed",
     },
     paymentMethod: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     payment: {
-        type: Boolean,
-        required: true,
-        default: false
+      type: Boolean,
+      required: true,
+      default: false,
     },
     date: {
-        type: Number,
-        required: true,
-    }
-  }
+      type: Number,
+      required: true,
+    },
+    // 🔐 Simple OTP Fields (like userModel)
+    otp: { 
+      type: String 
+    },
+    otpExpires: { 
+      type: Number 
+    },
+  },
+  { timestamps: true }
 );
 
 const orderModel = mongoose.models.order || mongoose.model("order", orderSchema);

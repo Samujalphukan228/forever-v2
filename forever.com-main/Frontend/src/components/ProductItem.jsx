@@ -1,11 +1,21 @@
 import React, { useContext, useState, memo } from "react";
 import { ShopContext } from "../context/ShopContext";
 import { Link } from "react-router-dom";
+import { 
+  FiHeart, 
+  FiShoppingCart, 
+  FiEye, 
+  FiStar,
+  FiTrendingUp,
+  FiZap
+} from "react-icons/fi";
 
-const ProductItem = memo(({ id, image, name, price }) => {
-  const { currency } = useContext(ShopContext);
+const ProductItem = memo(({ id, image, name, price, bestseller, rating, reviews }) => {
+  const { currency, addToCart } = useContext(ShopContext);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const formattedPrice = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
@@ -18,45 +28,67 @@ const ProductItem = memo(({ id, image, name, price }) => {
   const handleWishlistClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Wishlist clicked for product:", id);
-    // wishlist logic here
+    setIsWishlisted(!isWishlisted);
   };
 
+  const handleQuickAddToCart = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsAddingToCart(true);
+    await addToCart(id);
+    setTimeout(() => setIsAddingToCart(false), 1000);
+  };
+
+  const avgRating = rating || (reviews?.length > 0 
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) 
+    : 0);
+
+  const reviewCount = reviews?.length || 0;
+
   return (
-    <div className="relative group w-full">
-      {/* Wishlist Button */}
-      <button
-        onClick={handleWishlistClick}
-        className="absolute top-3 right-3 z-20 p-2 bg-white/70 backdrop-blur-sm rounded-full hover:bg-white transition"
-        aria-label="Add to wishlist"
-      >
-        <svg
-          className="w-4 h-4 text-gray-600 hover:text-red-500 transition-colors"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-          />
-        </svg>
-      </button>
-
-      <Link
-        to={`/product/${id}`}
-        className="block relative z-10"
-        aria-label={`View ${name} - ${currency}${formattedPrice}`}
-      >
-        <article className="bg-white rounded-2xl overflow-hidden transition-all duration-500 border border-gray-100 hover:border-gray-200">
-          {/* Image Section */}
-          <div className="relative aspect-[4/4.5] overflow-hidden bg-gray-50">
-            {!imageLoaded && !imageError && (
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-shimmer" />
+    <div className="group relative w-full max-w-xs">
+      <article className="bg-white overflow-hidden rounded-2xl border border-gray-200 transition-all duration-300 hover:border-gray-900 hover:shadow-2xl">
+        
+        {/* Image Container */}
+        <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
+          {/* Badges */}
+          <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
+            {bestseller && (
+              <span className="inline-flex items-center gap-1.5 bg-black text-white px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide">
+                <FiTrendingUp className="w-3 h-3" />
+                Bestseller
+              </span>
             )}
+          </div>
 
+          {/* Action Buttons */}
+          <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <button
+              onClick={handleWishlistClick}
+              className={`p-2.5 rounded-full shadow-lg backdrop-blur-sm transition-all duration-200 ${
+                isWishlisted 
+                  ? "bg-red-500 text-white scale-110" 
+                  : "bg-white/90 text-gray-700 hover:bg-white hover:scale-110"
+              }`}
+              aria-label="Add to wishlist"
+            >
+              <FiHeart className="w-4 h-4" fill={isWishlisted ? "currentColor" : "none"} />
+            </button>
+            <button
+              className="p-2.5 bg-white/90 rounded-full shadow-lg text-gray-700 hover:bg-white transition-all duration-200 backdrop-blur-sm hover:scale-110"
+              aria-label="Quick view"
+            >
+              <FiEye className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Skeleton Loader */}
+          {!imageLoaded && !imageError && (
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300 animate-shimmer" />
+          )}
+
+          {/* Product Image */}
+          <Link to={`/product/${id}`} className="block h-full">
             {!imageError ? (
               <img
                 src={image?.[0] || "/placeholder-image.jpg"}
@@ -64,59 +96,105 @@ const ProductItem = memo(({ id, image, name, price }) => {
                 loading="lazy"
                 onLoad={handleImageLoad}
                 onError={handleImageError}
-                className={`w-full h-full object-cover transition-all duration-700 ease-out 
-                  ${imageLoaded ? "opacity-100" : "opacity-0"} 
-                  group-hover:scale-105`}
+                className={`w-full h-full object-cover transition-transform duration-500 ${
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                } group-hover:scale-110`}
               />
             ) : (
-              <div className="flex items-center justify-center h-full bg-gray-100">
-                <svg
-                  className="w-12 h-12 text-gray-300"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
+              <div className="flex items-center justify-center h-full bg-gray-100 text-gray-300">
+                <FiZap className="w-12 h-12" />
+              </div>
+            )}
+          </Link>
+
+          {/* Quick Add Button */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/20 to-transparent transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+            <button
+              onClick={handleQuickAddToCart}
+              disabled={isAddingToCart}
+              className={`w-full py-3 rounded-lg text-white text-sm font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all duration-200 ${
+                isAddingToCart 
+                  ? "bg-green-500 scale-105" 
+                  : "bg-black hover:bg-gray-900 hover:shadow-lg"
+              }`}
+            >
+              {isAddingToCart ? (
+                <>
+                  <FiShoppingCart className="w-4 h-4 animate-bounce" />
+                  Added!
+                </>
+              ) : (
+                <>
+                  <FiShoppingCart className="w-4 h-4" />
+                  Quick Add
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Product Info */}
+        <Link to={`/product/${id}`}>
+          <div className="p-4 space-y-2.5">
+            {/* Rating Section */}
+            {avgRating > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="flex gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <FiStar
+                      key={i}
+                      className={`w-3.5 h-3.5 transition-colors ${
+                        i < Math.round(avgRating)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs font-semibold text-gray-700">
+                  {avgRating}
+                </span>
+                {reviewCount > 0 && (
+                  <span className="text-xs text-gray-500 ml-1">
+                    ({reviewCount})
+                  </span>
+                )}
               </div>
             )}
 
-            {/* Subtle gradient overlay for elegant depth */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          </div>
-
-          {/* Content */}
-          <div className="p-4 sm:p-5 space-y-2">
-            <h3 className="font-medium text-gray-900 text-sm sm:text-base line-clamp-2 leading-snug group-hover:text-gray-700 transition-colors duration-300">
+            {/* Product Name */}
+            <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 leading-tight group-hover:text-black transition-colors">
               {name}
             </h3>
 
-            <div className="flex items-baseline gap-2">
-              <span className="text-base sm:text-lg font-semibold text-gray-900">
-                <span className="text-sm align-top">{currency}</span>
-                {formattedPrice}
+            {/* Price & Link */}
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+              <span className="text-lg font-bold text-gray-900">
+                {currency}{formattedPrice}
+              </span>
+              <span className="text-xs text-gray-400 group-hover:text-black transition-colors font-semibold">
+                View
               </span>
             </div>
-
-            <div className="flex items-center gap-1 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0">
-              <span>View Details</span>
-              <svg
-                className="w-3 h-3 transform group-hover:translate-x-1 transition-transform duration-300"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
           </div>
-        </article>
-      </Link>
+        </Link>
+      </article>
+
+      {/* Shimmer Animation */}
+      <style jsx>{`
+        @keyframes shimmer {
+          0% {
+            background-position: -1000px 0;
+          }
+          100% {
+            background-position: 1000px 0;
+          }
+        }
+        .animate-shimmer {
+          animation: shimmer 2s infinite linear;
+          background-size: 1000px 100%;
+        }
+      `}</style>
     </div>
   );
 });

@@ -2,7 +2,15 @@ import React, { useContext, useEffect, useState, useCallback } from "react";
 import { ShopContext } from "../context/ShopContext";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { Eye, EyeOff } from "lucide-react";
+import {
+  FiEye,
+  FiEyeOff,
+  FiMail,
+  FiLock,
+  FiUser,
+  FiShield,
+  FiArrowRight,
+} from "react-icons/fi";
 
 const Login = () => {
   const [currentState, setCurrentState] = useState("Login");
@@ -19,13 +27,11 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // ✅ Use useCallback to prevent function recreation
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  // ✅ Reset form when state changes
   useEffect(() => {
     setFormData({
       name: "",
@@ -37,7 +43,6 @@ const Login = () => {
     setShowPassword(false);
   }, [currentState]);
 
-  // Submit logic
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -45,7 +50,6 @@ const Login = () => {
     try {
       let response;
 
-      // Sign Up
       if (currentState === "Sign Up") {
         response = await axios.post(`${backendUrl}/api/user/register`, {
           name: formData.name,
@@ -57,10 +61,7 @@ const Login = () => {
           toast.success("OTP sent to your email!");
           setCurrentState("Verify OTP");
         } else toast.error(response.data.message || "Sign Up failed");
-      }
-
-      // Verify OTP
-      else if (currentState === "Verify OTP") {
+      } else if (currentState === "Verify OTP") {
         response = await axios.post(`${backendUrl}/api/user/verify-otp`, {
           email: formData.email,
           otp: formData.otp,
@@ -72,10 +73,7 @@ const Login = () => {
           toast.success("Email verified successfully!");
           navigate("/");
         } else toast.error(response.data.message || "Invalid OTP");
-      }
-
-      // Login
-      else if (currentState === "Login") {
+      } else if (currentState === "Login") {
         response = await axios.post(`${backendUrl}/api/user/login`, {
           email: formData.email,
           password: formData.password,
@@ -87,10 +85,7 @@ const Login = () => {
           toast.success("Logged in successfully!");
           navigate("/");
         } else toast.error(response.data.message || "Login failed");
-      }
-
-      // Forgot Password
-      else if (currentState === "Forgot Password") {
+      } else if (currentState === "Forgot Password") {
         response = await axios.post(`${backendUrl}/api/user/forgot-password`, {
           email: formData.email,
         });
@@ -99,10 +94,7 @@ const Login = () => {
           toast.success("OTP sent to your email");
           setCurrentState("Reset Password");
         } else toast.error(response.data.message || "Failed to send OTP");
-      }
-
-      // Reset Password
-      else if (currentState === "Reset Password") {
+      } else if (currentState === "Reset Password") {
         response = await axios.post(`${backendUrl}/api/user/reset-password`, {
           email: formData.email,
           otp: formData.otp,
@@ -125,263 +117,414 @@ const Login = () => {
     if (token) navigate("/");
   }, [token]);
 
+  const getTitle = () => {
+    switch (currentState) {
+      case "Sign Up":
+        return "Create Account";
+      case "Login":
+        return "Welcome Back";
+      case "Verify OTP":
+        return "Verify Email";
+      case "Forgot Password":
+        return "Forgot Password";
+      case "Reset Password":
+        return "Reset Password";
+      default:
+        return "Login";
+    }
+  };
+
+  const getSubtitle = () => {
+    switch (currentState) {
+      case "Sign Up":
+        return "Create your account to get started";
+      case "Login":
+        return "Sign in to continue to forEver";
+      case "Verify OTP":
+        return "Enter the 6-digit code sent to your email";
+      case "Forgot Password":
+        return "We'll send you a reset code";
+      case "Reset Password":
+        return "Create a new secure password";
+      default:
+        return "";
+    }
+  };
+
+  const getButtonText = () => {
+    if (isLoading) return "Processing...";
+    switch (currentState) {
+      case "Sign Up":
+        return "Create Account";
+      case "Verify OTP":
+        return "Verify Email";
+      case "Forgot Password":
+        return "Send Reset Code";
+      case "Reset Password":
+        return "Reset Password";
+      default:
+        return "Sign In";
+    }
+  };
+
   return (
-    <div className="min-h-screen flex justify-center items-center bg-white px-4">
-      <form
-        onSubmit={onSubmitHandler}
-        className="w-full max-w-md p-8 flex flex-col gap-6"
-      >
-        {/* Header */}
-        <div className="text-center">
-          <h2 className="text-3xl font-semibold text-gray-900">
-            {currentState === "Sign Up"
-              ? "Create Account"
-              : currentState === "Login"
-              ? "Welcome Back"
-              : currentState === "Verify OTP"
-              ? "Verify Email"
-              : currentState === "Forgot Password"
-              ? "Forgot Password?"
-              : "Reset Password"}
-          </h2>
-          <p className="text-gray-500 text-sm mt-1">
-            {currentState === "Sign Up" && "Sign up to get started"}
-            {currentState === "Login" && "Login to your account"}
-            {currentState === "Verify OTP" && "Enter the OTP sent to your email"}
-            {currentState === "Forgot Password" &&
-              "Enter your email to receive OTP"}
-            {currentState === "Reset Password" && "Set your new password"}
-          </p>
+    <div className="min-h-screen  flex items-center justify-center py-12 px-4 mb-40">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">forEver</h1>
+          <div className="w-12 h-1 bg-black mx-auto rounded-full"></div>
         </div>
 
-        {/* Fields */}
-        {currentState === "Sign Up" && (
-          <>
-            {/* Name Input */}
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Full Name"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
-                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
-            />
-            
-            {/* Email Input */}
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Email Address"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
-                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
-            />
-            
-            {/* Password Input with Eye Toggle */}
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Password"
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
-                  focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
-              />
-              <div
-                className="absolute right-4 top-3 cursor-pointer text-gray-600 hover:text-black"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+        {/* Card */}
+        <div className="bg-white border-2 border-gray-200 rounded-2xl shadow-sm p-6 sm:p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {getTitle()}
+            </h2>
+            <p className="text-sm text-gray-600">{getSubtitle()}</p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={onSubmitHandler} className="space-y-4">
+            {/* Sign Up */}
+            {currentState === "Sign Up" && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      placeholder="John Doe"
+                      required
+                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="you@example.com"
+                      required
+                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Create a strong password"
+                      required
+                      className="w-full pl-11 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                    >
+                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Login */}
+            {currentState === "Login" && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="you@example.com"
+                      required
+                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Enter your password"
+                      required
+                      className="w-full pl-11 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                    >
+                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Verify OTP */}
+            {currentState === "Verify OTP" && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="you@example.com"
+                      required
+                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Verification Code
+                  </label>
+                  <div className="relative">
+                    <FiShield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      name="otp"
+                      value={formData.otp}
+                      onChange={handleChange}
+                      placeholder="Enter 6-digit code"
+                      required
+                      maxLength="6"
+                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-mono text-lg tracking-wider"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Forgot Password */}
+            {currentState === "Forgot Password" && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="you@example.com"
+                    required
+                    className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                  />
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            )}
 
-        {currentState === "Verify OTP" && (
-          <>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Email Address"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
-                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
-            />
-            <input
-              type="text"
-              name="otp"
-              value={formData.otp}
-              onChange={handleChange}
-              placeholder="Enter OTP"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
-                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
-            />
-          </>
-        )}
+            {/* Reset Password */}
+            {currentState === "Reset Password" && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="you@example.com"
+                      required
+                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                    />
+                  </div>
+                </div>
 
-        {currentState === "Login" && (
-          <>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Email Address"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
-                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
-            />
-            
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Password"
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
-                  focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
-              />
-              <div
-                className="absolute right-4 top-3 cursor-pointer text-gray-600 hover:text-black"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </div>
-            </div>
-          </>
-        )}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Verification Code
+                  </label>
+                  <div className="relative">
+                    <FiShield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      name="otp"
+                      value={formData.otp}
+                      onChange={handleChange}
+                      placeholder="Enter 6-digit code"
+                      required
+                      maxLength="6"
+                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-mono text-lg tracking-wider"
+                    />
+                  </div>
+                </div>
 
-        {currentState === "Forgot Password" && (
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Email Address"
-            required
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
-              focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
-          />
-        )}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="newPassword"
+                      value={formData.newPassword}
+                      onChange={handleChange}
+                      placeholder="Create a new password"
+                      required
+                      className="w-full pl-11 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                    >
+                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
 
-        {currentState === "Reset Password" && (
-          <>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Email Address"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
-                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
-            />
-            <input
-              type="text"
-              name="otp"
-              value={formData.otp}
-              onChange={handleChange}
-              placeholder="Enter OTP"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
-                focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
-            />
-            
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="newPassword"
-                value={formData.newPassword}
-                onChange={handleChange}
-                placeholder="New Password"
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 
-                  focus:border-black focus:ring-1 focus:ring-black transition-all outline-none bg-transparent"
-              />
-              <div
-                className="absolute right-4 top-3 cursor-pointer text-gray-600 hover:text-black"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Links */}
-        <div className="text-center text-sm text-gray-500">
-          {currentState === "Login" && (
-            <>
-              <p
-                onClick={() => setCurrentState("Sign Up")}
-                className="cursor-pointer hover:text-black transition"
-              >
-                Don't have an account?{" "}
-                <span className="font-medium">Sign Up</span>
-              </p>
-              <p
-                onClick={() => setCurrentState("Forgot Password")}
-                className="cursor-pointer hover:text-black transition mt-1"
-              >
-                Forgot Password?
-              </p>
-            </>
-          )}
-
-          {currentState === "Sign Up" && (
-            <p
-              onClick={() => setCurrentState("Login")}
-              className="cursor-pointer hover:text-black transition"
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`w-full py-3.5 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all ${
+                isLoading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-black hover:bg-gray-800"
+              }`}
             >
-              Already have an account?{" "}
-              <span className="font-medium">Login</span>
-            </p>
-          )}
+              {getButtonText()}
+              {!isLoading && <FiArrowRight size={18} />}
+            </button>
+          </form>
 
-          {(currentState === "Forgot Password" ||
-            currentState === "Reset Password" ||
-            currentState === "Verify OTP") && (
-            <p
-              onClick={() => setCurrentState("Login")}
-              className="cursor-pointer hover:text-black transition"
-            >
-              Back to Login
-            </p>
-          )}
+          {/* Footer Links */}
+          <div className="text-center mt-6 text-sm text-gray-600">
+            {currentState === "Login" && (
+              <>
+                <p>
+                  Don’t have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentState("Sign Up")}
+                    className="text-black font-semibold hover:underline"
+                  >
+                    Sign Up
+                  </button>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setCurrentState("Forgot Password")}
+                  className="mt-2 text-gray-600 hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </>
+            )}
+
+            {currentState === "Sign Up" && (
+              <p>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => setCurrentState("Login")}
+                  className="text-black font-semibold hover:underline"
+                >
+                  Login
+                </button>
+              </p>
+            )}
+
+            {currentState === "Verify OTP" && (
+              <p>
+                Didn’t get the code?{" "}
+                <button
+                  type="button"
+                  onClick={() => setCurrentState("Sign Up")}
+                  className="text-black font-semibold hover:underline"
+                >
+                  Resend
+                </button>
+              </p>
+            )}
+
+            {currentState === "Forgot Password" && (
+              <p>
+                Remembered your password?{" "}
+                <button
+                  type="button"
+                  onClick={() => setCurrentState("Login")}
+                  className="text-black font-semibold hover:underline"
+                >
+                  Login
+                </button>
+              </p>
+            )}
+
+            {currentState === "Reset Password" && (
+              <p>
+                Back to{" "}
+                <button
+                  type="button"
+                  onClick={() => setCurrentState("Login")}
+                  className="text-black font-semibold hover:underline"
+                >
+                  Login
+                </button>
+              </p>
+            )}
+          </div>
         </div>
-
-        {/* Button */}
-        <button
-          type="submit"
-          disabled={isLoading}
-          className={`w-full py-3 rounded-xl font-semibold text-white 
-            ${isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-black hover:bg-gray-800"} 
-            transition-all duration-200`}
-        >
-          {isLoading
-            ? "Processing..."
-            : currentState === "Sign Up"
-            ? "Register"
-            : currentState === "Verify OTP"
-            ? "Verify OTP"
-            : currentState === "Forgot Password"
-            ? "Send OTP"
-            : currentState === "Reset Password"
-            ? "Reset Password"
-            : "Login"}
-        </button>
-      </form>
+      </div>
     </div>
   );
 };
