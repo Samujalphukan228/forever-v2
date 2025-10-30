@@ -65,7 +65,7 @@ const Orders = () => {
   };
 
   return (
-    <div className="pt-20 px-4 md:px-10 max-w-6xl mx-auto">
+    <div className="pt-20 px-4 md:px-10 max-w-6xl mx-auto mb-45">
       <div className="text-center mb-10">
         <Title text1="MY" text2="ORDERS" />
         <p className="text-gray-500 mt-2">Track and manage all your recent orders</p>
