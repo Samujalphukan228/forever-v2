@@ -65,7 +65,6 @@ const Orders = () => {
         setToken(storedToken);
         return;
       }
-
       const res = await axios.post(`${backendUrl}/api/user/admin`, {
         email: import.meta.env.VITE_ADMIN_EMAIL || "Nilutpal@forever.com",
         password: import.meta.env.VITE_ADMIN_PASSWORD || "Nilutpal123",
