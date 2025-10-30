@@ -12,6 +12,7 @@ const GRID_COLS = {
     lg: 'lg:grid-cols-5'
 }
 
+
 const BestSeller = () => {
     const { products, loading, error } = useContext(ShopContext)
     const [bestSeller, setBestSeller] = useState([])
