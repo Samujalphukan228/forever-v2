@@ -40,7 +40,7 @@ const Hero = () => {
   return (
     <>
       {/* Mobile Layout */}
-      <section className="md:hidden relative flex flex-col items-center justify-center px-4 py-6 bg-white">
+      <section className="md:hidden relative flex flex-col items-center justify-center min-h-screen px-4 bg-white">
         <motion.div
           className="w-full overflow-hidden rounded-lg mb-6"
           variants={imageVariants}
@@ -101,7 +101,7 @@ const Hero = () => {
       </section>
 
       {/* Desktop Layout */}
-      <section className="hidden md:flex relative flex-col items-center justify-center px-6 py-12 lg:py-14 text-center bg-white">
+      <section className="hidden md:flex relative flex-col items-center justify-center min-h-screen px-6 py-12 lg:py-14 text-center bg-white">
         <div className="max-w-5xl mx-auto w-full">
           {/* Heading */}
           <motion.div
@@ -166,7 +166,7 @@ const Hero = () => {
 
         {/* Hero Image */}
         <motion.div
-          className="w-full overflow-hidden rounded-lg shadow-lg"
+          className="w-full overflow-hidden rounded-lg shadow-lg max-w-5xl"
           variants={imageVariants}
           initial="hidden"
           animate={loaded ? "visible" : "hidden"}
