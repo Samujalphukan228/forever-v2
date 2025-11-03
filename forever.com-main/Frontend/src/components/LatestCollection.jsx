@@ -22,6 +22,7 @@ const LatestCollection = () => {
         setLatestProducts(products.slice(0, 10))
     }, [products])
 
+    
     useEffect(() => {
         if (latestProducts.length === 0) return
 
