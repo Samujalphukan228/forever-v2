@@ -1,12 +1,11 @@
+"use client"
+
 import React, { useContext, useState, useMemo, useRef, useEffect } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
-<<<<<<< HEAD
 import { gsap } from 'gsap';
 import { FiTruck, FiShield, FiLock, FiPercent, FiX, FiArrowRight, FiCheck } from 'react-icons/fi';
-=======
-import { FiTruck, FiShield, FiLock, FiPercent, FiX, FiArrowRight } from 'react-icons/fi';
->>>>>>> e1259737f9ef849d4b56356bf2aafe74522540e1
+
 
 const CartTotal = ({ showCheckoutButton = true }) => {
   const { currency, delivery_fee, getCartAmount, cartItems } = useContext(ShopContext);
