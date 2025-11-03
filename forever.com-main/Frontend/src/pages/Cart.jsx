@@ -8,7 +8,7 @@ import { gsap } from "gsap";
 const Cart = () => {
   const { products, currency, cartItems, updateQuantity } = useContext(ShopContext);
   const [cartData, setCartData] = useState([]);
-  const [hasAnimated, setHasAnimated] = useState(false); // Track if initial animation has run
+  const [hasAnimated, setHasAnimated] = useState(false);
   const navigate = useNavigate();
 
   const containerRef = useRef(null);
@@ -34,7 +34,7 @@ const Cart = () => {
 
   // Initial page animation - ONLY RUN ONCE
   useEffect(() => {
-    if (hasAnimated) return; // Skip if already animated
+    if (hasAnimated) return;
 
     if (cartData.length === 0) {
       if (emptyStateRef.current) {
@@ -51,7 +51,7 @@ const Cart = () => {
       const tl = gsap.timeline({
         defaults: { ease: "power3.out" },
         delay: 0.2,
-        onComplete: () => setHasAnimated(true) // Mark as animated after completion
+        onComplete: () => setHasAnimated(true)
       });
 
       gsap.set([headerRef.current, ...itemsRef.current, summaryRef.current], {
@@ -79,7 +79,7 @@ const Cart = () => {
     }, containerRef);
 
     return () => ctx.revert();
-  }, [cartData.length > 0 && !hasAnimated]); // Only trigger when cart has items AND hasn't animated yet
+  }, [cartData.length > 0 && !hasAnimated]);
 
   // Hover animations - Set up ONCE
   useEffect(() => {
@@ -107,7 +107,6 @@ const Cart = () => {
       item.addEventListener('mouseenter', handleMouseEnter);
       item.addEventListener('mouseleave', handleMouseLeave);
 
-      // Cleanup
       return () => {
         item.removeEventListener('mouseenter', handleMouseEnter);
         item.removeEventListener('mouseleave', handleMouseLeave);
@@ -123,9 +122,8 @@ const Cart = () => {
 
   // Animate quantity change
   const handleQuantityChange = (itemId, newQuantity, buttonElement) => {
-    if (newQuantity < 1) return; // Prevent going below 1
+    if (newQuantity < 1) return;
 
-    // Animate button press
     gsap.to(buttonElement, {
       scale: 0.8,
       duration: 0.1,
@@ -134,7 +132,6 @@ const Cart = () => {
       ease: "power2.inOut"
     });
 
-    // Animate quantity number
     const quantityElement = buttonElement.parentElement.querySelector('.quantity-display');
     if (quantityElement) {
       gsap.fromTo(quantityElement,
@@ -167,20 +164,20 @@ const Cart = () => {
   // Empty State
   if (cartData.length === 0) {
     return (
-      <div className="min-h-screen  pt-24 lg:pt-28 py-12 ">
+      <div className="min-h-screen pt-24 lg:pt-28 py-12 px-4">
         <div className="max-w-2xl mx-auto">
           <div 
             ref={emptyStateRef}
-            className="bg-white border border-gray-200 p-16 text-center"
+            className="border border-gray-200 p-8 sm:p-16 text-center"
           >
-            <div className="w-20 h-20 bg-gray-50 flex items-center justify-center mx-auto mb-6">
-              <FiShoppingBag className="w-10 h-10 text-gray-400" />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-50 flex items-center justify-center mx-auto mb-4 sm:mb-6">
+              <FiShoppingBag className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
             </div>
-            <h2 className="text-2xl font-light text-black mb-2">Your cart is empty</h2>
-            <p className="text-gray-500 font-light mb-8">Start adding some products to your cart</p>
+            <h2 className="text-xl sm:text-2xl font-light text-black mb-2">Your cart is empty</h2>
+            <p className="text-sm sm:text-base text-gray-500 font-light mb-6 sm:mb-8">Start adding some products to your cart</p>
             <button
               onClick={() => navigate("/collection")}
-              className="inline-flex items-center gap-2 px-8 py-3 bg-black text-white text-xs uppercase tracking-[0.15em] font-medium hover:bg-gray-800 transition-colors"
+              className="inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 bg-black text-white text-xs uppercase tracking-[0.15em] font-medium hover:bg-gray-800 transition-colors"
               onMouseEnter={(e) => {
                 gsap.to(e.currentTarget.querySelector('svg'), { x: -2, duration: 0.2 });
               }}
@@ -198,21 +195,21 @@ const Cart = () => {
   }
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-[#fafafa] pt-24 lg:pt-28">
-      <div className="px-6 lg:px-16 xl:px-24 py-8 lg:py-12 max-w-[1800px] mx-auto">
+    <div ref={containerRef} className="min-h-screen pt-24 lg:pt-28">
+      <div className="py-6 sm:py-8 lg:py-12 max-w-[1800px] mx-auto ">
         
         {/* Header */}
-        <div ref={headerRef} className="mb-8">
-          <h1 className="text-3xl lg:text-4xl font-extralight text-black mb-2">Shopping Cart</h1>
-          <p className="text-gray-500 font-light">
+        <div ref={headerRef} className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extralight text-black mb-2">Shopping Cart</h1>
+          <p className="text-sm sm:text-base text-gray-500 font-light">
             {cartData.length} {cartData.length === 1 ? 'item' : 'items'} in your cart
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           
           {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
             {cartData.map((item, index) => {
               const product = products.find((p) => p._id === item._id);
               if (!product) return null;
@@ -221,26 +218,26 @@ const Cart = () => {
                 <div
                   key={item._id}
                   ref={(el) => (itemsRef.current[index] = el)}
-                  className="bg-white border border-gray-200 p-6 hover:border-black transition-colors cursor-pointer"
+                  className="bg-white border border-gray-200 p-3 sm:p-4 lg:p-6 hover:border-black transition-colors"
                 >
-                  <div className="flex gap-6">
+                  <div className="flex gap-3 sm:gap-4 lg:gap-6">
                     
                     {/* Product Image */}
                     <div className="flex-shrink-0">
                       <img
                         src={product.image[0]}
                         alt={product.name}
-                        className="w-28 h-28 lg:w-32 lg:h-32 object-cover"
+                        className="w-20 h-20 sm:w-24 sm:h-24 lg:w-32 lg:h-32 object-cover"
                       />
                     </div>
 
                     {/* Product Details */}
-                    <div className="flex-1 flex flex-col justify-between">
+                    <div className="flex-1 flex flex-col justify-between min-w-0">
                       
                       {/* Top Section */}
                       <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-medium text-black text-lg pr-4">
+                        <div className="flex justify-between items-start gap-2 mb-1 sm:mb-2">
+                          <h3 className="font-medium text-black text-sm sm:text-base lg:text-lg leading-tight">
                             {product.name}
                           </h3>
                           <button
@@ -255,43 +252,43 @@ const Cart = () => {
                               gsap.to(e.currentTarget, { rotate: 0, scale: 1, duration: 0.2 });
                             }}
                           >
-                            <FiTrash2 className="w-5 h-5" />
+                            <FiTrash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                           </button>
                         </div>
-                        <p className="text-gray-500 text-sm font-light">
+                        <p className="text-gray-500 text-xs sm:text-sm font-light">
                           {currency}{product.price.toFixed(2)} each
                         </p>
                       </div>
 
                       {/* Bottom Section */}
-                      <div className="flex items-center justify-between mt-4">
+                      <div className="flex items-center justify-between gap-3 mt-3 sm:mt-4">
                         
                         {/* Quantity Controls */}
-                        <div className="flex items-center gap-3 border border-gray-200 p-1">
+                        <div className="flex items-center gap-2 sm:gap-3 border border-gray-200 p-0.5 sm:p-1">
                           <button
                             onClick={(e) => handleQuantityChange(item._id, item.quantity - 1, e.currentTarget)}
                             disabled={item.quantity <= 1}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                           >
-                            <FiMinus className="w-4 h-4" />
+                            <FiMinus className="w-3 h-3 sm:w-4 sm:h-4" />
                           </button>
                           
-                          <span className="quantity-display w-10 text-center font-medium text-black">
+                          <span className="quantity-display w-8 sm:w-10 text-center text-sm sm:text-base font-medium text-black">
                             {item.quantity}
                           </span>
                           
                           <button
                             onClick={(e) => handleQuantityChange(item._id, item.quantity + 1, e.currentTarget)}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                            className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-50 transition-colors"
                           >
-                            <FiPlus className="w-4 h-4" />
+                            <FiPlus className="w-3 h-3 sm:w-4 sm:h-4" />
                           </button>
                         </div>
 
                         {/* Item Total */}
                         <div className="text-right">
-                          <p className="text-xs text-gray-400 uppercase tracking-wider">Subtotal</p>
-                          <p className="text-lg font-medium text-black">
+                          <p className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider mb-0.5">Subtotal</p>
+                          <p className="text-base sm:text-lg font-medium text-black whitespace-nowrap">
                             {currency}{getItemTotal(item._id, item.quantity)}
                           </p>
                         </div>
@@ -305,9 +302,9 @@ const Cart = () => {
             {/* Continue Shopping Button (Mobile) */}
             <button
               onClick={() => navigate("/collection")}
-              className="w-full lg:hidden flex items-center justify-center gap-2 py-3 border border-gray-300 font-medium text-gray-700 hover:border-black transition-colors"
+              className="w-full lg:hidden flex items-center justify-center gap-2 py-3 border border-gray-300 text-xs sm:text-sm font-medium text-gray-700 hover:border-black transition-colors"
             >
-              <FiArrowLeft />
+              <FiArrowLeft className="w-4 h-4" />
               Continue Shopping
             </button>
           </div>
