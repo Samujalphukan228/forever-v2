@@ -174,7 +174,7 @@ const Collection = () => {
       ref={containerRef}
       className="pt-24 lg:pt-28" // Account for fixed navbar
     >
-      <div className="px-6 lg:px-16 xl:px-24 py-8 lg:py-12 max-w-[1800px] mx-auto">
+      <div className=" py-8 lg:py-12 max-w-[1800px] mx-auto">
         {/* Header Section */}
         <div 
           ref={headerRef}
