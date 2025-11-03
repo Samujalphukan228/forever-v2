@@ -94,8 +94,6 @@ const PlaceOrder = () => {
         }
       } else if (method === "stripe") {
         toast.info("Stripe payment coming soon");
-      } else if (method === "razorpay") {
-        toast.info("Razorpay integration coming soon");
       }
     } catch (error) {
       console.error("Order error:", error);
@@ -261,10 +259,9 @@ const PlaceOrder = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
                     { id: "stripe", logo: assets.stripe_logo, name: "Stripe" },
-                    { id: "razorpay", logo: assets.razorpay_logo, name: "Razorpay" },
                     { id: "cod", label: "Cash on Delivery", name: "COD" },
                   ].map((m) => (
                     <button
