@@ -75,7 +75,7 @@ const Hero = () => {
   }, []);
 
   return (
-    <section ref={containerRef} className=" pt-19 lg:pt-21">
+    <section ref={containerRef} className="  pt-15 sm:pt-19 md:pt-19 lg:pt-21">
       {/* Hero viewport (image on top) */}
       <div className="relative h-[calc(100vh-6rem)] lg:h-[calc(100vh-7rem)] overflow-hidden">
         {/* Image */}
