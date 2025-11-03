@@ -188,7 +188,7 @@ const PlaceOrder = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-[#fafafa] pt-24 lg:pt-28 pb-12 px-4">
+      <div className="min-h-screen pt-24 lg:pt-28 pb-12 ">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
