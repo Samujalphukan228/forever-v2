@@ -7,7 +7,6 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
-
 const BestSeller = () => {
     const { products } = useContext(ShopContext)
     const [bestSeller, setBestSeller] = useState([])
