@@ -7,6 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
+
 const LatestCollection = () => {
     const { products } = useContext(ShopContext)
     const [latestProducts, setLatestProducts] = useState([])
