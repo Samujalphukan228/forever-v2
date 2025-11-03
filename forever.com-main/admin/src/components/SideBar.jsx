@@ -66,4 +66,5 @@ const SideBar = ({ isOpen, setIsOpen }) => {
   );
 };
 
+
 export default SideBar;

@@ -10,7 +10,6 @@ const ShopContextProvider = ({ children }) => {
   const currency = "₹";
   const delivery_fee = 10;
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
   const [token, setToken] = useState("");
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
