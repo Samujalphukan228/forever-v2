@@ -1,113 +1,162 @@
-import { motion } from "framer-motion";
-import { assets } from "../assets/assets";
+import React, { useRef, useEffect } from 'react'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const OurPolicy = () => {
-  const policies = [
-    {
-      icon: assets.exchange_icon,
-      title: "Easy Exchange",
-      desc: "Hassle-free exchanges for all your purchases.",
-    },
-    {
-      icon: assets.quality_icon,
-      title: "7 Days Returns",
-      desc: "Enjoy 7 days of free returns with ease.",
-    },
-    {
-      icon: assets.support_img,
-      title: "24/7 Support",
-      desc: "Our team is available round the clock to help.",
-    },
-  ];
+    const sectionRef = useRef(null)
+    const itemsRef = useRef([])
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.1,
-      },
-    },
-  };
+    const policies = [
+        {
+            icon: (
+                <svg className="w-8 h-8 policy-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+            ),
+            title: 'Easy Exchange',
+            description: 'Hassle-free exchange policy',
+        },
+        {
+            icon: (
+                <svg className="w-8 h-8 policy-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            ),
+            title: '7 Days Return',
+            description: 'Worry-free return within 7 days',
+        },
+        {
+            icon: (
+                <svg className="w-8 h-8 policy-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            ),
+            title: 'Best Support',
+            description: '24/7 customer support',
+        },
+    ]
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 15 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
-    },
-  };
+    useEffect(() => {
+        const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
 
-  return (
-    <section className="py-10 sm:py-12 md:py-14 px-4 sm:px-6">
-      <div className="max-w-5xl mx-auto">
-        {/* Heading */}
-        <motion.div
-          className="text-center mb-10 sm:mb-12"
-          initial={{ opacity: 0, y: -10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.5 }}
+        const ctx = gsap.context(() => {
+            // Initial states
+            gsap.set(itemsRef.current, { opacity: 0, y: 30 })
+            gsap.set('.policy-underline', { scaleX: 0, transformOrigin: 'left' })
+
+            // Stroke setup for icons
+            const setupStroke = (el) => {
+                const paths = el.querySelectorAll('path, line, polyline, polygon, circle, rect')
+                paths.forEach((p) => {
+                    const length = p.getTotalLength ? p.getTotalLength() : 120
+                    p.style.strokeDasharray = length
+                    p.style.strokeDashoffset = length
+                })
+            }
+            itemsRef.current.forEach((item) => {
+                const icon = item.querySelector('.policy-icon')
+                if (icon) setupStroke(icon)
+            })
+
+            // Reveal on scroll
+            gsap.to(itemsRef.current, {
+                opacity: 1,
+                y: 0,
+                duration: 0.7,
+                ease: 'power3.out',
+                stagger: 0.15,
+                scrollTrigger: {
+                    trigger: sectionRef.current,
+                    start: 'top 80%',
+                    once: true,
+                },
+                onStart: () => {
+                    // draw icons + underline sweep
+                    itemsRef.current.forEach((item, i) => {
+                        const icon = item.querySelector('.policy-icon')
+                        const underline = item.querySelector('.policy-underline')
+                        if (icon) {
+                            const paths = icon.querySelectorAll('path, line, polyline, polygon, circle, rect')
+                            gsap.to(paths, {
+                                strokeDashoffset: 0,
+                                duration: prefersReduced ? 0 : 0.9,
+                                ease: 'power2.out',
+                                stagger: 0.05,
+                                delay: i * 0.12,
+                            })
+                        }
+                        if (underline) {
+                            gsap.to(underline, {
+                                scaleX: 1,
+                                duration: prefersReduced ? 0 : 0.6,
+                                ease: 'power3.out',
+                                delay: i * 0.15 + 0.1,
+                            })
+                        }
+                    })
+                },
+            })
+
+            // Hover micro-interactions
+            itemsRef.current.forEach((card) => {
+                const icon = card.querySelector('.policy-icon')
+                const onEnter = () => {
+                    gsap.to(card, { y: -4, duration: 0.25, ease: 'power2.out' })
+                    if (!prefersReduced && icon) {
+                        gsap.to(icon, { y: -2, rotate: -2, duration: 0.25, ease: 'power2.out' })
+                    }
+                }
+                const onLeave = () => {
+                    gsap.to(card, { y: 0, duration: 0.25, ease: 'power2.out' })
+                    if (!prefersReduced && icon) {
+                        gsap.to(icon, { y: 0, rotate: 0, duration: 0.25, ease: 'power2.out' })
+                    }
+                }
+                card.addEventListener('mouseenter', onEnter)
+                card.addEventListener('mouseleave', onLeave)
+                card.addEventListener('focusin', onEnter)
+                card.addEventListener('focusout', onLeave)
+            })
+        }, sectionRef)
+
+        return () => ctx.revert()
+    }, [])
+
+    return (
+        <section
+            ref={sectionRef}
+            className="py-16 lg:py-20 px-6 lg:px-16 xl:px-24 max-w-[1800px] mx-auto"
+            aria-label="Our policy highlights"
         >
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 mb-2">
-            Our Commitment to You
-          </h2>
-          <p className="text-sm sm:text-base text-gray-600 font-light">
-            We stand behind our products with quality and care
-          </p>
-        </motion.div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 lg:gap-12">
+                {policies.map((policy, index) => (
+                    <div
+                        key={policy.title}
+                        ref={(el) => (itemsRef.current[index] = el)}
+                        className="text-center group outline-none focus:ring-2 focus:ring-black/30"
+                        tabIndex={0}
+                        role="article"
+                        aria-label={policy.title}
+                    >
+                        <div className="inline-flex items-center justify-center w-16 h-16 mb-4 text-black">
+                            {policy.icon}
+                        </div>
 
-        {/* Policy Cards */}
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-        >
-          {policies.map((policy, index) => (
-            <motion.div
-              key={index}
-              variants={itemVariants}
-              className="group"
-            >
-              <div className="bg-white rounded-xl p-6 sm:p-7 border border-gray-200 hover:border-gray-900 transition-all duration-300 h-full flex flex-col items-center text-center hover:shadow-lg">
-                {/* Icon Container */}
-                <motion.div
-                  className="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-100 mb-4"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <img
-                    src={policy.icon}
-                    alt={policy.title}
-                    className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
-                  />
-                </motion.div>
+                        <h3 className="text-sm font-medium uppercase tracking-[0.15em] text-black">
+                            {policy.title}
+                        </h3>
+                        <div className="mx-auto mt-2 mb-3 h-[1px] w-10 bg-black policy-underline" />
 
-                {/* Text Content */}
-                <h3 className="font-semibold text-gray-900 text-base sm:text-lg mb-2">
-                  {policy.title}
-                </h3>
-                <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-light">
-                  {policy.desc}
-                </p>
+                        <p className="text-xs text-gray-500 font-light tracking-wide">
+                            {policy.description}
+                        </p>
+                    </div>
+                ))}
+            </div>
+        </section>
+    )
+}
 
-                {/* Bottom Accent Line */}
-                <motion.div
-                  className="h-0.5 w-0 bg-black mt-4 group-hover:w-8 transition-all duration-300"
-                  initial={{ width: 0 }}
-                  whileHover={{ width: 32 }}
-                />
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </section>
-  );
-};
-
-export default OurPolicy;
+export default OurPolicy

@@ -1,52 +1,136 @@
-import React from "react";
+import React, { useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const Footer = () => {
-  return (
-    <footer className="bg-white text-gray-700 py-8 px-5 sm:px-12 border-t border-gray-200">
-      {/* Main Grid */}
-      <div className="flex flex-col sm:grid grid-cols-[2fr_1fr_1fr] gap-8 mb-6">
-        
-        {/* Logo & Description */}
-        <div>
-          <h1 className="text-xl font-semibold text-[#0F3D2F] mb-3">forEver</h1>
-          <p className="text-gray-600 text-sm leading-relaxed max-w-md">
-            Discover our exclusive earring collection that combines elegance with affordability. 
-            Forever brings premium-quality designs at prices that make luxury accessible.
-          </p>
-        </div>
+    const footerRef = useRef(null)
+    const contentRef = useRef(null)
 
-        {/* Company Links */}
-        <div>
-          <p className="text-base font-semibold mb-3 text-gray-900">Company</p>
-          <ul className="flex flex-col gap-1.5 text-gray-600 text-sm">
-            {["Home", "About Us", "Delivery", "Privacy Policy"].map((link, idx) => (
-              <li
-                key={idx}
-                className="hover:text-gray-900 cursor-pointer transition-colors duration-300"
-              >
-                {link}
-              </li>
-            ))}
-          </ul>
-        </div>
+    useEffect(() => {
+        const ctx = gsap.context(() => {
+            gsap.set(contentRef.current?.children || [], {
+                opacity: 0,
+                y: 20,
+            })
 
-        {/* Contact Info */}
-        <div>
-          <p className="text-base font-semibold mb-3 text-gray-900">Get in Touch</p>
-          <ul className="flex flex-col gap-1 text-gray-600 text-sm">
-            <li><span className="font-medium">Phone:</span> +1 212-456-7890</li>
-            <li><span className="font-medium">Email:</span> contact@forever.com</li>
-          </ul>
-        </div>
-      </div>
+            gsap.to(contentRef.current?.children || [], {
+                opacity: 1,
+                y: 0,
+                duration: 0.6,
+                stagger: 0.1,
+                ease: "power3.out",
+                scrollTrigger: {
+                    trigger: footerRef.current,
+                    start: "top 90%",
+                    toggleActions: "play none none none",
+                }
+            })
 
-      {/* Divider & Copyright */}
-      <hr className="border-gray-200 mb-3" />
-      <p className="text-xs text-center text-gray-500">
-        &copy; {new Date().getFullYear()} forEver.com — All Rights Reserved
-      </p>
-    </footer>
-  );
-};
+        }, footerRef)
 
-export default Footer;
+        return () => ctx.revert()
+    }, [])
+
+    return (
+        <footer ref={footerRef} className='border-t border-gray-200'>
+            <div className='max-w-[1800px] mx-auto px-6 lg:px-16 xl:px-24 py-16 lg:py-20'>
+                <div ref={contentRef} className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16'>
+                    {/* Brand */}
+                    <div>
+                        <h3 className='text-2xl font-extralight tracking-wide text-black mb-4'>
+                            forEver
+                        </h3>
+                        <p className='text-xs text-gray-500 font-light leading-relaxed tracking-wide'>
+                            Timeless jewelry crafted with elegance and passion. Every piece tells a story.
+                        </p>
+                    </div>
+
+                    {/* Company */}
+                    <div>
+                        <h4 className='text-xs uppercase tracking-[0.2em] font-medium text-black mb-4'>
+                            Company
+                        </h4>
+                        <ul className='space-y-2'>
+                            <li>
+                                <Link to='/' className='text-sm text-gray-600 hover:text-black transition-colors font-light'>
+                                    Home
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to='/about' className='text-sm text-gray-600 hover:text-black transition-colors font-light'>
+                                    About Us
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to='/collection' className='text-sm text-gray-600 hover:text-black transition-colors font-light'>
+                                    Collection
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to='/contact' className='text-sm text-gray-600 hover:text-black transition-colors font-light'>
+                                    Contact
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Support */}
+                    <div>
+                        <h4 className='text-xs uppercase tracking-[0.2em] font-medium text-black mb-4'>
+                            Support
+                        </h4>
+                        <ul className='space-y-2'>
+                            <li>
+                                <a href='#' className='text-sm text-gray-600 hover:text-black transition-colors font-light'>
+                                    Privacy Policy
+                                </a>
+                            </li>
+                            <li>
+                                <a href='#' className='text-sm text-gray-600 hover:text-black transition-colors font-light'>
+                                    Terms & Conditions
+                                </a>
+                            </li>
+                            <li>
+                                <a href='#' className='text-sm text-gray-600 hover:text-black transition-colors font-light'>
+                                    Shipping Info
+                                </a>
+                            </li>
+                            <li>
+                                <a href='#' className='text-sm text-gray-600 hover:text-black transition-colors font-light'>
+                                    Returns
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Contact */}
+                    <div>
+                        <h4 className='text-xs uppercase tracking-[0.2em] font-medium text-black mb-4'>
+                            Get In Touch
+                        </h4>
+                        <ul className='space-y-2'>
+                            <li className='text-sm text-gray-600 font-light'>
+                                +1 (555) 123-4567
+                            </li>
+                            <li className='text-sm text-gray-600 font-light'>
+                                hello@forever.com
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                {/* Bottom */}
+                <div className='mt-12 pt-8 border-t [#fafafa]'>
+                    <p className='text-center text-xs text-gray-400 tracking-wide'>
+                        © {new Date().getFullYear()} forEver. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </footer>
+    )
+}
+
+export default Footer

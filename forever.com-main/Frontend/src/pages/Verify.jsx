@@ -1,56 +1,89 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { ShopContext } from '../context/ShopContext';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-
+import { ShopContext } from '../context/ShopContext';
 
 const Verify = () => {
-  const { navigate, token, setCartItems, backendUrl } = useContext(ShopContext); // fixed
-  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
-  const success = searchParams?.get('success');
-  const orderId = searchParams?.get('orderId');
-  const [loading, setLoading] = useState(true);
+  const { navigate, token, setCartItems, backendUrl } = useContext(ShopContext);
 
-  const verifyPayment = async () => {
-    if (!token || !success || !orderId) {
+  const [searchParams] = useSearchParams();
+  const successParam = (searchParams.get('success') || '').toLowerCase();
+  const orderId = searchParams.get('orderId') || '';
+
+  // consider "true", "1", "success" as truthy
+  const success =
+    successParam === 'true' ||
+    successParam === '1' ||
+    successParam === 'success';
+
+  const [loading, setLoading] = useState(true);
+  const hasVerifiedRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
+    // Only verify once we have token and required query params
+    if (hasVerifiedRef.current) return;
+
+    // Guard: missing params
+    if (!orderId || typeof success === 'undefined') {
+      setLoading(false);
       toast.error('Missing payment information.');
-      navigate('/cart');
+      navigate('/cart', { replace: true });
       return;
     }
 
-    try {
-      const response = await axios.post(
-        `${backendUrl}/api/order/verifyStripe`,
-        { success, orderId },
-        { headers: { token } }
-      );
+    // Wait for token to be available
+    if (!token) return;
 
-      console.log('Verify response:', response.data);
+    const verifyPayment = async () => {
+      hasVerifiedRef.current = true;
+      setLoading(true);
 
-      if (response.data.success) {
-        setCartItems({}); // cleared cart using correct setter
-        toast.success('Payment verified successfully!');
-        navigate('/orders');
-      } else {
-        toast.error('Payment verification failed.');
-        navigate('/cart');
+      try {
+        const { data } = await axios.post(
+          `${backendUrl}/api/order/verifyStripe`,
+          { success, orderId },
+          { headers: { token } }
+        );
+
+        if (data?.success) {
+          setCartItems({}); // clear cart
+          toast.success('Payment verified successfully!');
+          navigate('/orders', { replace: true });
+        } else {
+          toast.error(data?.message || 'Payment verification failed.');
+          navigate('/cart', { replace: true });
+        }
+      } catch (err) {
+        console.error('Payment verification error:', err);
+        toast.error(err?.response?.data?.message || err.message || 'Something went wrong.');
+        navigate('/cart', { replace: true });
+      } finally {
+        if (mountedRef.current) setLoading(false);
       }
-    } catch (error) {
-      console.error('Payment verification error:', error);
-      toast.error(error?.response?.data?.message || error.message || 'Something went wrong.');
-      navigate('/cart');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  useEffect(() => {
     verifyPayment();
-  }, [token, success, orderId]);
+  }, [token, success, orderId, backendUrl, navigate, setCartItems]);
 
   return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      {loading ? <p>Verifying payment, please wait...</p> : <p>Redirecting...</p>}
+    <div className="min-h-[60vh] flex items-center justify-center px-6">
+      <div className="text-center">
+        {loading ? (
+          <>
+            <div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-700">Verifying payment, please wait...</p>
+          </>
+        ) : (
+          <p className="text-gray-700">Redirecting...</p>
+        )}
+      </div>
     </div>
   );
 };

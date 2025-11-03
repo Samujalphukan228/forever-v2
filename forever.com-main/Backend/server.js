@@ -33,15 +33,7 @@ app.use("/api/product", productRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/order", orderRouter);
 
-// Root route
-app.get("/", (req, res) => {
-  res.send("Backend is working!");
-});
 
-// Test route to check network
-app.get("/api/test", (req, res) => {
-  res.json({ message: "Backend is reachable!" });
-});
 
 // Start server
 app.listen(port, () => {

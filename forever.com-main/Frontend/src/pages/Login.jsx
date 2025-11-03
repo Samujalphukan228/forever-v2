@@ -1,7 +1,8 @@
-import React, { useContext, useEffect, useState, useCallback } from "react";
+import React, { useContext, useEffect, useState, useCallback, useRef } from "react";
 import { ShopContext } from "../context/ShopContext";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { gsap } from "gsap";
 import {
   FiEye,
   FiEyeOff,
@@ -27,12 +28,88 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Refs for animations
+  const containerRef = useRef(null);
+  const logoRef = useRef(null);
+  const cardRef = useRef(null);
+  const titleRef = useRef(null);
+  const subtitleRef = useRef(null);
+  const formRef = useRef(null);
+  const buttonRef = useRef(null);
+  const footerRef = useRef(null);
+  const inputRefs = useRef([]);
+
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   }, []);
 
+  // Initial page load animation
   useEffect(() => {
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        defaults: { ease: "power3.out" },
+      });
+
+      gsap.set([logoRef.current, cardRef.current], {
+        opacity: 0,
+        y: 30
+      });
+
+      tl.to(logoRef.current, {
+        opacity: 1,
+        y: 0,
+        duration: 0.8
+      })
+      .to(cardRef.current, {
+        opacity: 1,
+        y: 0,
+        duration: 0.8
+      }, "-=0.4");
+
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  // Animate form state changes
+  useEffect(() => {
+    if (!formRef.current) return;
+
+    const ctx = gsap.context(() => {
+      // Animate form content change
+      gsap.fromTo([titleRef.current, subtitleRef.current],
+        { opacity: 0, y: -10 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }
+      );
+
+      // Animate inputs
+      gsap.fromTo(inputRefs.current,
+        { opacity: 0, x: -20 },
+        { 
+          opacity: 1, 
+          x: 0, 
+          duration: 0.3, 
+          stagger: 0.08,
+          ease: "power2.out",
+          delay: 0.2
+        }
+      );
+
+      // Animate button
+      gsap.fromTo(buttonRef.current,
+        { opacity: 0, scale: 0.95 },
+        { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.4)", delay: 0.4 }
+      );
+
+      // Animate footer
+      gsap.fromTo(footerRef.current,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.3, delay: 0.5 }
+      );
+    }, formRef);
+
+    // Reset form data when state changes
     setFormData({
       name: "",
       email: "",
@@ -41,11 +118,30 @@ const Login = () => {
       newPassword: "",
     });
     setShowPassword(false);
+
+    return () => ctx.revert();
   }, [currentState]);
+
+  // Eye icon animation
+  const togglePassword = () => {
+    const eyeButton = document.querySelector('.eye-button');
+    gsap.to(eyeButton, {
+      rotate: showPassword ? 0 : 180,
+      duration: 0.3,
+      ease: "power2.inOut"
+    });
+    setShowPassword(!showPassword);
+  };
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Animate button loading state
+    gsap.to(buttonRef.current, {
+      scale: 0.95,
+      duration: 0.1
+    });
 
     try {
       let response;
@@ -108,8 +204,19 @@ const Login = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || error.message);
+      
+      // Shake animation on error
+      gsap.to(cardRef.current, {
+        x: [0, -10, 10, -10, 10, 0],
+        duration: 0.5,
+        ease: "power2.inOut"
+      });
     } finally {
       setIsLoading(false);
+      gsap.to(buttonRef.current, {
+        scale: 1,
+        duration: 0.2
+      });
     }
   };
 
@@ -168,35 +275,35 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen  flex items-center justify-center py-12 px-4 mb-40">
+    <div ref={containerRef} className="min-h-screen  flex items-center justify-center pt-24 lg:pt-28 pb-40 px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">forEver</h1>
-          <div className="w-12 h-1 bg-black mx-auto rounded-full"></div>
+        <div ref={logoRef} className="text-center mb-8">
+          <h1 className="text-3xl font-extralight text-black mb-2">forEver</h1>
+          <div className="w-12 h-[1px] bg-black mx-auto"></div>
         </div>
 
         {/* Card */}
-        <div className="bg-white border-2 border-gray-200 rounded-2xl shadow-sm p-6 sm:p-8">
+        <div ref={cardRef} className="bg-white border border-gray-200 p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 ref={titleRef} className="text-2xl font-light text-black mb-2">
               {getTitle()}
             </h2>
-            <p className="text-sm text-gray-600">{getSubtitle()}</p>
+            <p ref={subtitleRef} className="text-sm text-gray-500 font-light">{getSubtitle()}</p>
           </div>
 
           {/* Form */}
-          <form onSubmit={onSubmitHandler} className="space-y-4">
+          <form ref={formRef} onSubmit={onSubmitHandler} className="space-y-5">
             {/* Sign Up */}
             {currentState === "Sign Up" && (
               <>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div ref={(el) => (inputRefs.current[0] = el)}>
+                  <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wider">
                     Full Name
                   </label>
                   <div className="relative">
-                    <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       name="name"
@@ -204,17 +311,23 @@ const Login = () => {
                       onChange={handleChange}
                       placeholder="John Doe"
                       required
-                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                      className="w-full pl-11 pr-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors text-sm"
+                      onFocus={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1.02, duration: 0.2 });
+                      }}
+                      onBlur={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1, duration: 0.2 });
+                      }}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div ref={(el) => (inputRefs.current[1] = el)}>
+                  <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wider">
                     Email Address
                   </label>
                   <div className="relative">
-                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="email"
                       name="email"
@@ -222,17 +335,23 @@ const Login = () => {
                       onChange={handleChange}
                       placeholder="you@example.com"
                       required
-                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                      className="w-full pl-11 pr-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors text-sm"
+                      onFocus={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1.02, duration: 0.2 });
+                      }}
+                      onBlur={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1, duration: 0.2 });
+                      }}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div ref={(el) => (inputRefs.current[2] = el)}>
+                  <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wider">
                     Password
                   </label>
                   <div className="relative">
-                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
@@ -240,14 +359,20 @@ const Login = () => {
                       onChange={handleChange}
                       placeholder="Create a strong password"
                       required
-                      className="w-full pl-11 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                      className="w-full pl-11 pr-12 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors text-sm"
+                      onFocus={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1.02, duration: 0.2 });
+                      }}
+                      onBlur={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1, duration: 0.2 });
+                      }}
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                      onClick={togglePassword}
+                      className="eye-button absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
                     >
-                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                     </button>
                   </div>
                 </div>
@@ -257,12 +382,12 @@ const Login = () => {
             {/* Login */}
             {currentState === "Login" && (
               <>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div ref={(el) => (inputRefs.current[0] = el)}>
+                  <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wider">
                     Email Address
                   </label>
                   <div className="relative">
-                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="email"
                       name="email"
@@ -270,17 +395,23 @@ const Login = () => {
                       onChange={handleChange}
                       placeholder="you@example.com"
                       required
-                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                      className="w-full pl-11 pr-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors text-sm"
+                      onFocus={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1.02, duration: 0.2 });
+                      }}
+                      onBlur={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1, duration: 0.2 });
+                      }}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div ref={(el) => (inputRefs.current[1] = el)}>
+                  <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wider">
                     Password
                   </label>
                   <div className="relative">
-                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
@@ -288,14 +419,20 @@ const Login = () => {
                       onChange={handleChange}
                       placeholder="Enter your password"
                       required
-                      className="w-full pl-11 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                      className="w-full pl-11 pr-12 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors text-sm"
+                      onFocus={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1.02, duration: 0.2 });
+                      }}
+                      onBlur={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1, duration: 0.2 });
+                      }}
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                      onClick={togglePassword}
+                      className="eye-button absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
                     >
-                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                     </button>
                   </div>
                 </div>
@@ -305,12 +442,12 @@ const Login = () => {
             {/* Verify OTP */}
             {currentState === "Verify OTP" && (
               <>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div ref={(el) => (inputRefs.current[0] = el)}>
+                  <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wider">
                     Email Address
                   </label>
                   <div className="relative">
-                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="email"
                       name="email"
@@ -318,17 +455,23 @@ const Login = () => {
                       onChange={handleChange}
                       placeholder="you@example.com"
                       required
-                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                      className="w-full pl-11 pr-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors text-sm"
+                      onFocus={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1.02, duration: 0.2 });
+                      }}
+                      onBlur={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1, duration: 0.2 });
+                      }}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div ref={(el) => (inputRefs.current[1] = el)}>
+                  <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wider">
                     Verification Code
                   </label>
                   <div className="relative">
-                    <FiShield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <FiShield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       name="otp"
@@ -337,7 +480,13 @@ const Login = () => {
                       placeholder="Enter 6-digit code"
                       required
                       maxLength="6"
-                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-mono text-lg tracking-wider"
+                      className="w-full pl-11 pr-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors font-mono text-lg tracking-[0.3em]"
+                      onFocus={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1.02, duration: 0.2 });
+                      }}
+                      onBlur={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1, duration: 0.2 });
+                      }}
                     />
                   </div>
                 </div>
@@ -346,12 +495,12 @@ const Login = () => {
 
             {/* Forgot Password */}
             {currentState === "Forgot Password" && (
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <div ref={(el) => (inputRefs.current[0] = el)}>
+                <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wider">
                   Email Address
                 </label>
                 <div className="relative">
-                  <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="email"
                     name="email"
@@ -359,7 +508,13 @@ const Login = () => {
                     onChange={handleChange}
                     placeholder="you@example.com"
                     required
-                    className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                    className="w-full pl-11 pr-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors text-sm"
+                    onFocus={(e) => {
+                      gsap.to(e.currentTarget.parentElement, { scale: 1.02, duration: 0.2 });
+                    }}
+                    onBlur={(e) => {
+                      gsap.to(e.currentTarget.parentElement, { scale: 1, duration: 0.2 });
+                    }}
                   />
                 </div>
               </div>
@@ -368,12 +523,12 @@ const Login = () => {
             {/* Reset Password */}
             {currentState === "Reset Password" && (
               <>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div ref={(el) => (inputRefs.current[0] = el)}>
+                  <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wider">
                     Email Address
                   </label>
                   <div className="relative">
-                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="email"
                       name="email"
@@ -381,17 +536,23 @@ const Login = () => {
                       onChange={handleChange}
                       placeholder="you@example.com"
                       required
-                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                      className="w-full pl-11 pr-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors text-sm"
+                      onFocus={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1.02, duration: 0.2 });
+                      }}
+                      onBlur={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1, duration: 0.2 });
+                      }}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div ref={(el) => (inputRefs.current[1] = el)}>
+                  <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wider">
                     Verification Code
                   </label>
                   <div className="relative">
-                    <FiShield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <FiShield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       name="otp"
@@ -400,17 +561,23 @@ const Login = () => {
                       placeholder="Enter 6-digit code"
                       required
                       maxLength="6"
-                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-mono text-lg tracking-wider"
+                      className="w-full pl-11 pr-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors font-mono text-lg tracking-[0.3em]"
+                      onFocus={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1.02, duration: 0.2 });
+                      }}
+                      onBlur={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1, duration: 0.2 });
+                      }}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <div ref={(el) => (inputRefs.current[2] = el)}>
+                  <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wider">
                     New Password
                   </label>
                   <div className="relative">
-                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type={showPassword ? "text" : "password"}
                       name="newPassword"
@@ -418,14 +585,20 @@ const Login = () => {
                       onChange={handleChange}
                       placeholder="Create a new password"
                       required
-                      className="w-full pl-11 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors"
+                      className="w-full pl-11 pr-12 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors text-sm"
+                      onFocus={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1.02, duration: 0.2 });
+                      }}
+                      onBlur={(e) => {
+                        gsap.to(e.currentTarget.parentElement, { scale: 1, duration: 0.2 });
+                      }}
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                      onClick={togglePassword}
+                      className="eye-button absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
                     >
-                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                     </button>
                   </div>
                 </div>
@@ -434,29 +607,42 @@ const Login = () => {
 
             {/* Submit Button */}
             <button
+              ref={buttonRef}
               type="submit"
               disabled={isLoading}
-              className={`w-full py-3.5 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all ${
+              className={`w-full py-3.5 text-xs uppercase tracking-[0.15em] font-medium text-white flex items-center justify-center gap-2 transition-all ${
                 isLoading
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-black hover:bg-gray-800"
               }`}
+              onMouseEnter={(e) => {
+                if (!isLoading) {
+                  gsap.to(e.currentTarget, { scale: 1.02, duration: 0.2 });
+                  gsap.to(e.currentTarget.querySelector('svg'), { x: 3, duration: 0.2 });
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isLoading) {
+                  gsap.to(e.currentTarget, { scale: 1, duration: 0.2 });
+                  gsap.to(e.currentTarget.querySelector('svg'), { x: 0, duration: 0.2 });
+                }
+              }}
             >
               {getButtonText()}
-              {!isLoading && <FiArrowRight size={18} />}
+              {!isLoading && <FiArrowRight size={16} />}
             </button>
           </form>
 
           {/* Footer Links */}
-          <div className="text-center mt-6 text-sm text-gray-600">
+          <div ref={footerRef} className="text-center mt-8 text-xs text-gray-500">
             {currentState === "Login" && (
               <>
                 <p>
-                  Don’t have an account?{" "}
+                  Don't have an account?{" "}
                   <button
                     type="button"
                     onClick={() => setCurrentState("Sign Up")}
-                    className="text-black font-semibold hover:underline"
+                    className="text-black font-medium hover:underline"
                   >
                     Sign Up
                   </button>
@@ -464,7 +650,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setCurrentState("Forgot Password")}
-                  className="mt-2 text-gray-600 hover:underline"
+                  className="mt-2 text-gray-500 hover:text-black transition-colors block mx-auto"
                 >
                   Forgot Password?
                 </button>
@@ -477,7 +663,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setCurrentState("Login")}
-                  className="text-black font-semibold hover:underline"
+                  className="text-black font-medium hover:underline"
                 >
                   Login
                 </button>
@@ -486,11 +672,11 @@ const Login = () => {
 
             {currentState === "Verify OTP" && (
               <p>
-                Didn’t get the code?{" "}
+                Didn't get the code?{" "}
                 <button
                   type="button"
                   onClick={() => setCurrentState("Sign Up")}
-                  className="text-black font-semibold hover:underline"
+                  className="text-black font-medium hover:underline"
                 >
                   Resend
                 </button>
@@ -503,7 +689,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setCurrentState("Login")}
-                  className="text-black font-semibold hover:underline"
+                  className="text-black font-medium hover:underline"
                 >
                   Login
                 </button>
@@ -516,7 +702,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setCurrentState("Login")}
-                  className="text-black font-semibold hover:underline"
+                  className="text-black font-medium hover:underline"
                 >
                   Login
                 </button>

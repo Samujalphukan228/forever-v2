@@ -1,94 +1,98 @@
-import React, { useContext, useEffect, useState, useMemo } from 'react'
+import React, { useContext, useEffect, useState, useRef } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import Title from './Title'
 import ProductItem from './ProductItem'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
-// Constants
-const MAX_BESTSELLERS = 5
-const GRID_COLS = {
-    default: 'grid-cols-2',
-    sm: 'sm:grid-cols-3',
-    md: 'md:grid-cols-4',
-    lg: 'lg:grid-cols-5'
-}
-
+gsap.registerPlugin(ScrollTrigger)
 
 const BestSeller = () => {
-    const { products, loading, error } = useContext(ShopContext)
+    const { products } = useContext(ShopContext)
     const [bestSeller, setBestSeller] = useState([])
+    const sectionRef = useRef(null)
+    const titleRef = useRef(null)
+    const descRef = useRef(null)
+    const itemsRef = useRef([])
 
-    // Memoize filtered products to avoid unnecessary recalculations
-    const filteredBestSellers = useMemo(() => {
-        if (!products || !Array.isArray(products)) return []
-        return products
-            .filter(item => item?.bestseller)
-            .slice(0, MAX_BESTSELLERS)
+    useEffect(() => {
+        const bestProduct = products.filter((item) => item.bestseller)
+        setBestSeller(bestProduct.slice(0, 5))
     }, [products])
 
     useEffect(() => {
-        setBestSeller(filteredBestSellers)
-    }, [filteredBestSellers])
+        if (bestSeller.length === 0) return
 
-    // Loading state
-    if (loading) {
-        return (
-            <div className='my-10'>
-                <div className='text-center text-3xl py-8'>
-                    <Title text1={'BEST'} text2={'SELLERS'} />
-                </div>
-                <div className={`grid ${Object.values(GRID_COLS).join(' ')} gap-4 gap-y-6`}>
-                    {[...Array(MAX_BESTSELLERS)].map((_, index) => (
-                        <ProductSkeleton key={index} />
-                    ))}
-                </div>
-            </div>
-        )
-    }
+        const ctx = gsap.context(() => {
+            gsap.set([titleRef.current, descRef.current], {
+                opacity: 0,
+                y: 30,
+            })
 
-    // Error state
-    if (error) {
-        return (
-            <div className='my-10 text-center'>
-                <Title text1={'BEST'} text2={'SELLERS'} />
-                <p className='text-red-500 mt-4'>Unable to load best sellers. Please try again later.</p>
-            </div>
-        )
-    }
+            gsap.set(itemsRef.current, {
+                opacity: 0,
+                y: 40,
+            })
 
-    // Empty state
-    if (!bestSeller.length) {
-        return (
-            <div className='my-10 text-center'>
-                <Title text1={'BEST'} text2={'SELLERS'} />
-                <p className='text-gray-500 mt-4'>No best sellers available at the moment.</p>
-            </div>
-        )
-    }
+            const tl = gsap.timeline({
+                scrollTrigger: {
+                    trigger: sectionRef.current,
+                    start: "top 80%",
+                    toggleActions: "play none none none",
+                },
+                defaults: { ease: "power3.out" }
+            })
+
+            tl.to(titleRef.current, {
+                opacity: 1,
+                y: 0,
+                duration: 1,
+            })
+            .to(descRef.current, {
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+            }, "-=0.6")
+            .to(itemsRef.current, {
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+                stagger: 0.1,
+            }, "-=0.4")
+
+        }, sectionRef)
+
+        return () => ctx.revert()
+    }, [bestSeller])
 
     return (
-        <section className='my-10' aria-labelledby='bestsellers-title'>
-            <header className='text-center text-3xl py-8'>
-                <h2 id='bestsellers-title'>
+        <section 
+            ref={sectionRef}
+            className='py-16 lg:py-24 px-6 lg:px-16 xl:px-24 max-w-[1800px] mx-auto'
+        >
+            <div className='text-center mb-12 lg:mb-16'>
+                <div ref={titleRef}>
                     <Title text1={'BEST'} text2={'SELLERS'} />
-                </h2>
-                <p className='w-3/4 m-auto text-xs sm:text-sm md:text-base text-gray-600 mt-2'>
-                    Explore our most loved earrings, handpicked by customers for their style, elegance, and timeless appeal.
+                </div>
+                <p 
+                    ref={descRef}
+                    className='max-w-2xl mx-auto mt-4 text-sm lg:text-base text-gray-500 font-light tracking-wide'
+                >
+                    Our most loved pieces, handpicked by customers worldwide.
                 </p>
-            </header>
+            </div>
 
-            <div
-                className={`grid ${Object.values(GRID_COLS).join(' ')} gap-4 gap-y-6`}
-                role='list'
-                aria-label='Best selling products'
-            >
-                {bestSeller.map((item) => (
-                    <div key={item._id} role='listitem'>
-                        <ProductItem
-                            id={item._id}
-                            name={item.name}
-                            image={item.image}
-                            price={item.price}
-                            loading='lazy'
+            <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8'>
+                {bestSeller.map((item, index) => (
+                    <div 
+                        key={item._id} 
+                        ref={(el) => (itemsRef.current[index] = el)}
+                    >
+                        <ProductItem 
+                            id={item._id} 
+                            image={item.image} 
+                            name={item.name} 
+                            price={item.price} 
                         />
                     </div>
                 ))}
@@ -96,15 +100,5 @@ const BestSeller = () => {
         </section>
     )
 }
-
-// Skeleton loader component for better UX
-const ProductSkeleton = () => (
-    <div className='animate-pulse'>
-        <div className='bg-gray-200 aspect-square rounded-lg mb-2'></div>
-        <div className='h-4 bg-gray-200 rounded w-3/4 mb-2'></div>
-        <div className='h-4 bg-gray-200 rounded w-1/2'></div>
-    </div>
-)
-
 
 export default BestSeller

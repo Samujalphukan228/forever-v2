@@ -1,187 +1,137 @@
 "use client";
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { FiArrowRight } from "react-icons/fi";
+import { useEffect, useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const Hero = () => {
-  const [loaded, setLoaded] = useState(false);
+  const containerRef = useRef(null);
+  const headingRef = useRef(null);
+  const subheadingRef = useRef(null);
+  const ctaRef = useRef(null);
+  const imageRef = useRef(null);
+  const curtainRef = useRef(null);
 
   useEffect(() => {
-    const timeout = setTimeout(() => setLoaded(true), 100);
-    return () => clearTimeout(timeout);
+    const prefersReduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const ctx = gsap.context(() => {
+      if (prefersReduced) return;
+
+      const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+
+      gsap.set(headingRef.current?.children || [], {
+        opacity: 0,
+        yPercent: 100,
+        rotateX: -90,
+      });
+      gsap.set(subheadingRef.current, { opacity: 0, y: 20 });
+      gsap.set(ctaRef.current, { opacity: 0, y: 20 });
+      gsap.set(imageRef.current, { scale: 1.15 });
+      gsap.set(curtainRef.current, { yPercent: 0 });
+
+      tl.to(headingRef.current?.children || [], {
+        opacity: 1,
+        yPercent: 0,
+        rotateX: 0,
+        duration: 1.1,
+        stagger: 0.08,
+      })
+        .to(
+          subheadingRef.current,
+          { opacity: 1, y: 0, duration: 0.7 },
+          "-=0.7"
+        )
+        .to(
+          ctaRef.current,
+          { opacity: 1, y: 0, duration: 0.6 },
+          "-=0.5"
+        )
+        .to(
+          curtainRef.current,
+          { yPercent: -100, duration: 1.1, ease: "power3.inOut" },
+          "-=1.1"
+        )
+        .to(
+          imageRef.current,
+          { scale: 1, duration: 1.4, ease: "power2.out" },
+          "-=1.1"
+        );
+
+      // Subtle parallax
+      gsap.to(imageRef.current, {
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        },
+        yPercent: 20,
+        ease: "none",
+      });
+    }, containerRef);
+
+    return () => ctx.revert();
   }, []);
 
-  const fadeUp = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (custom) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        delay: custom * 0.12,
-        ease: [0.16, 1, 0.3, 1],
-      },
-    }),
-  };
-
-  const imageVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: {
-        duration: 0.8,
-        delay: 0.3,
-        ease: [0.16, 1, 0.3, 1],
-      },
-    },
-  };
-
   return (
-    <>
-      {/* Mobile Layout */}
-      <section className="md:hidden relative flex flex-col items-center justify-center px-4 py-10 bg-white">
-        <motion.div
-          className="w-full overflow-hidden rounded-lg mb-6"
-          variants={imageVariants}
-          initial="hidden"
-          animate={loaded ? "visible" : "hidden"}
-        >
+    <section ref={containerRef} className=" pt-19 lg:pt-21">
+      {/* Hero viewport (image on top) */}
+      <div className="relative h-[calc(100vh-6rem)] lg:h-[calc(100vh-7rem)] overflow-hidden">
+        {/* Image */}
+        <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80"
-            alt="Luxury Earrings Collection"
-            className="w-full h-60 object-cover"
+            ref={imageRef}
+            src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1800&q=90"
+            alt="Luxury Jewelry"
+            className="w-full h-full object-cover"
           />
-        </motion.div>
-
-        <motion.h1
-          className="text-3xl font-light text-gray-950 mb-3 text-center"
-          variants={fadeUp}
-          custom={0}
-          initial="hidden"
-          animate={loaded ? "visible" : "hidden"}
-        >
-          Timeless <span className="italic font-normal">Earrings</span>
-        </motion.h1>
-
-        <motion.p
-          className="text-sm text-gray-600 text-center mb-6 leading-relaxed font-light max-w-sm"
-          variants={fadeUp}
-          custom={1}
-          initial="hidden"
-          animate={loaded ? "visible" : "hidden"}
-        >
-          Handcrafted pieces that capture elegance and sophistication.
-        </motion.p>
-
-        <motion.div
-          className="flex flex-col gap-3 w-full"
-          variants={fadeUp}
-          custom={2}
-          initial="hidden"
-          animate={loaded ? "visible" : "hidden"}
-        >
-          <motion.a
-            href="/Collection"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="px-6 py-3 bg-black text-white text-xs uppercase tracking-wider font-semibold text-center rounded-md hover:bg-gray-900 transition-all"
-          >
-            Explore Collection
-          </motion.a>
-          <motion.a
-            href="/About"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="px-6 py-3 border border-gray-900 text-gray-900 text-xs uppercase tracking-wider font-semibold text-center rounded-md hover:bg-gray-900 hover:text-white transition-all"
-          >
-            Learn More
-          </motion.a>
-        </motion.div>
-      </section>
-
-      {/* Desktop Layout */}
-      <section className="hidden md:flex relative flex-col items-center justify-center px-6 py-20 lg:py-24 text-center bg-white">
-        <div className="max-w-4xl mx-auto w-full">
-          {/* Heading */}
-          <motion.div
-            className="mb-4"
-            variants={fadeUp}
-            custom={0}
-            initial="hidden"
-            animate={loaded ? "visible" : "hidden"}
-          >
-            <h1 className="text-5xl lg:text-6xl font-light text-gray-950 tracking-tight leading-tight">
-              Timeless <span className="italic font-normal">Earrings</span>
-            </h1>
-          </motion.div>
-
-          {/* Divider */}
-          <motion.div
-            className="w-10 h-[2px] bg-gray-950 mx-auto mb-6"
-            variants={fadeUp}
-            custom={0.4}
-            initial="hidden"
-            animate={loaded ? "visible" : "hidden"}
-          />
-
-          {/* Description */}
-          <motion.p
-            className="text-base lg:text-lg text-gray-700 font-light leading-relaxed max-w-2xl mx-auto mb-10"
-            variants={fadeUp}
-            custom={1}
-            initial="hidden"
-            animate={loaded ? "visible" : "hidden"}
-          >
-            Handcrafted pieces that capture elegance and sophistication — designed for those who value simplicity and beauty in every detail.
-          </motion.p>
-
-          {/* CTA Buttons */}
-          <motion.div
-            className="flex justify-center gap-4 mb-14"
-            variants={fadeUp}
-            custom={2}
-            initial="hidden"
-            animate={loaded ? "visible" : "hidden"}
-          >
-            <motion.a
-              href="/Collection"
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              className="inline-flex items-center gap-2 px-8 py-3 bg-gray-950 text-white text-xs uppercase tracking-wider font-semibold rounded-md hover:bg-gray-800 transition-all shadow-sm"
-            >
-              Explore Collection
-              <FiArrowRight className="w-4 h-4" />
-            </motion.a>
-            <motion.a
-              href="/About"
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              className="px-8 py-3 border border-gray-950 text-gray-950 text-xs uppercase tracking-wider font-semibold rounded-md hover:bg-gray-950 hover:text-white transition-all"
-            >
-              Discover More
-            </motion.a>
-          </motion.div>
         </div>
 
-        {/* Hero Image */}
-        <motion.div
-          className="w-full max-w-5xl overflow-hidden rounded-lg shadow-md"
-          variants={imageVariants}
-          initial="hidden"
-          animate={loaded ? "visible" : "hidden"}
-        >
-          <div className="group relative overflow-hidden">
-            <img
-              src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=1800&q=90"
-              alt="Luxury Earrings Collection"
-              className="w-full h-[420px] object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent transition-all duration-500" />
+        {/* Readability gradient (very subtle) */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent" />
+
+        {/* Curtain reveal */}
+        <div ref={curtainRef} className="absolute inset-0 bg-white z-10" />
+
+        {/* Text at the end (bottom-right) */}
+        <div className="absolute bottom-8 sm:bottom-12 right-6 sm:right-10 text-right">
+          <div ref={headingRef} className="overflow-hidden">
+            <h1 className="block text-[2.75rem] sm:text-[3.75rem] lg:text-[5rem] font-extralight leading-[0.92] tracking-[-0.02em] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.25)]">
+              Pure
+            </h1>
+            <h1 className="block text-[2.75rem] sm:text-[3.75rem] lg:text-[5rem] font-extralight leading-[0.92] tracking-[-0.02em] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.25)]">
+              Elegance
+            </h1>
           </div>
-        </motion.div>
-      </section>
-    </>
+
+          <p
+            ref={subheadingRef}
+            className="mt-3 text-[10px] sm:text-xs text-white/90 uppercase tracking-[0.25em] font-medium"
+          >
+            Luxury Jewelry Collection
+          </p>
+
+          <div ref={ctaRef} className="mt-5">
+            <a
+              href="/collection"
+              className="group inline-flex items-center gap-3 text-xs sm:text-sm uppercase tracking-[0.15em] font-medium text-white border-b border-white/90 pb-1 hover:pb-2 transition-all duration-300"
+            >
+              <span>Discover More</span>
+              <svg
+                className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };
 
