@@ -74,7 +74,7 @@ const LatestCollection = () => {
     return (
         <section 
             ref={sectionRef}
-            className='py-16 lg:py-24  max-w-[1800px] mx-auto'
+            className='py-16 lg:py-24 max-w-[1800px] mx-auto'
         >
             {/* Header */}
             <div className='text-center mb-12 lg:mb-16'>
