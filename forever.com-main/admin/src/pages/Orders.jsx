@@ -17,6 +17,7 @@ import {
   FiBarChart2,
   FiTrendingUp,
   FiPieChart,
+  FiMail,
 } from "react-icons/fi";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -35,6 +36,17 @@ const Orders = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [activeChart, setActiveChart] = useState("overview");
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Status colors
   const statusColors = {
@@ -60,7 +72,7 @@ const Orders = () => {
     });
 
     const statusDistribution = Object.entries(statusCount).map(([name, value]) => ({
-      name,
+      name: isMobile && name.length > 10 ? name.substring(0, 10) + '..' : name,
       value,
       percentage: ((value / orders.length) * 100).toFixed(1)
     }));
@@ -72,17 +84,20 @@ const Orders = () => {
       revenueByStatus[status] = (revenueByStatus[status] || 0) + (order.amount || 0);
     });
 
-    const revenueStatusData = Object.entries(revenueByStatus).map(([status, revenue]) => ({
-      status,
-      revenue: Math.round(revenue),
-      orders: statusCount[status] || 0
-    }));
+    const revenueStatusData = Object.entries(revenueByStatus)
+      .slice(0, isMobile ? 4 : 6)
+      .map(([status, revenue]) => ({
+        status: isMobile && status.length > 8 ? status.substring(0, 8) + '..' : status,
+        revenue: Math.round(revenue),
+        orders: statusCount[status] || 0
+      }));
 
-    // Daily Orders & Revenue (Last 30 days)
+    // Daily Orders & Revenue (Last 30 days - sample for mobile)
     const today = new Date();
+    const daysToShow = isMobile ? 7 : 30;
     const dailyData = {};
     
-    for (let i = 29; i >= 0; i--) {
+    for (let i = daysToShow - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateKey = date.toISOString().split('T')[0];
@@ -98,7 +113,10 @@ const Orders = () => {
     });
 
     const dailyTrends = Object.values(dailyData).map(day => ({
-      date: new Date(day.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
+      date: new Date(day.date).toLocaleDateString('en-IN', { 
+        month: isMobile ? 'numeric' : 'short', 
+        day: 'numeric' 
+      }),
       orders: day.orders,
       revenue: Math.round(day.revenue)
     }));
@@ -110,10 +128,12 @@ const Orders = () => {
       paymentMethods[method] = (paymentMethods[method] || 0) + 1;
     });
 
-    const paymentData = Object.entries(paymentMethods).map(([name, value]) => ({
-      name,
-      value
-    }));
+    const paymentData = Object.entries(paymentMethods)
+      .slice(0, isMobile ? 3 : 5)
+      .map(([name, value]) => ({
+        name: isMobile && name.length > 8 ? name.substring(0, 8) + '..' : name,
+        value
+      }));
 
     // Top Cities by Orders
     const cityCount = {};
@@ -124,21 +144,26 @@ const Orders = () => {
 
     const topCities = Object.entries(cityCount)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
+      .slice(0, isMobile ? 3 : 5)
       .map(([city, count]) => ({
-        city: city.length > 15 ? city.substring(0, 15) + '...' : city,
+        city: city.length > (isMobile ? 10 : 15) 
+          ? city.substring(0, isMobile ? 10 : 15) + '..' 
+          : city,
         orders: count
       }));
 
     // Average Order Value by Status
-    const avgOrderByStatus = Object.entries(revenueByStatus).map(([status, revenue]) => ({
-      status,
-      avgValue: Math.round(revenue / (statusCount[status] || 1))
-    }));
+    const avgOrderByStatus = Object.entries(revenueByStatus)
+      .slice(0, isMobile ? 4 : 6)
+      .map(([status, revenue]) => ({
+        status: isMobile && status.length > 8 ? status.substring(0, 8) + '..' : status,
+        avgValue: Math.round(revenue / (statusCount[status] || 1))
+      }));
 
     // Monthly Revenue (Last 6 months)
+    const monthsToShow = isMobile ? 3 : 6;
     const monthlyData = {};
-    for (let i = 5; i >= 0; i--) {
+    for (let i = monthsToShow - 1; i >= 0; i--) {
       const date = new Date();
       date.setMonth(date.getMonth() - i);
       const monthKey = date.toISOString().slice(0, 7);
@@ -169,7 +194,7 @@ const Orders = () => {
       avgOrderByStatus,
       monthlyRevenue
     };
-  }, [orders]);
+  }, [orders, isMobile]);
 
   // Auto login
   const adminLogin = useCallback(async () => {
@@ -334,13 +359,23 @@ const Orders = () => {
     }).format(amount);
   };
 
+  // Format currency short for mobile
+  const formatCurrencyShort = (amount) => {
+    if (amount >= 100000) {
+      return `₹${(amount / 100000).toFixed(1)}L`;
+    } else if (amount >= 1000) {
+      return `₹${(amount / 1000).toFixed(1)}K`;
+    }
+    return formatCurrency(amount);
+  };
+
   // Format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-IN", {
-      month: "short",
+      month: isMobile ? "numeric" : "short",
       day: "numeric",
-      year: "numeric",
+      year: isMobile ? "2-digit" : "numeric",
     });
   };
 
@@ -348,11 +383,13 @@ const Orders = () => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload[0]) {
       return (
-        <div className="bg-black text-white p-3 rounded-lg shadow-lg">
+        <div className="bg-black text-white p-2 md:p-3 rounded-lg shadow-lg text-xs md:text-sm">
           <p className="font-semibold">{label}</p>
           {payload.map((entry, index) => (
-            <p key={index} className="text-sm">
-              {entry.name}: {entry.name.includes('revenue') || entry.name.includes('Revenue') ? formatCurrency(entry.value) : entry.value}
+            <p key={index}>
+              {entry.name}: {entry.name.includes('revenue') || entry.name.includes('Revenue') 
+                ? (isMobile ? formatCurrencyShort(entry.value) : formatCurrency(entry.value))
+                : entry.value}
             </p>
           ))}
         </div>
@@ -362,26 +399,26 @@ const Orders = () => {
   };
 
   return (
-    <div className="max-w-7xl">
+    <div className="max-w-7xl mx-auto ">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Orders</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 md:mb-6">
+        <h1 className="text-xl md:text-2xl font-bold">Orders</h1>
         <button
           onClick={() => setShowAnalytics(!showAnalytics)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+          className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-lg transition-colors text-sm md:text-base ${
             showAnalytics ? 'bg-black text-white' : 'bg-white border border-gray-300'
           }`}
         >
-          <FiBarChart2 />
+          <FiBarChart2 className="text-sm md:text-base" />
           <span>{showAnalytics ? 'Hide' : 'Show'} Analytics</span>
         </button>
       </div>
 
       {/* Analytics Dashboard */}
       {showAnalytics && analyticsData && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-          {/* Chart Tabs */}
-          <div className="flex gap-2 mb-6 border-b border-gray-200">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-6 mb-4 md:mb-6">
+          {/* Chart Tabs - Horizontal scroll on mobile */}
+          <div className="flex gap-1 md:gap-2 mb-4 md:mb-6 border-b border-gray-200 overflow-x-auto">
             {[
               { id: 'overview', label: 'Overview', icon: FiBarChart2 },
               { id: 'trends', label: 'Trends', icon: FiTrendingUp },
@@ -390,13 +427,13 @@ const Orders = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveChart(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 -mb-px transition-colors ${
+                className={`flex items-center gap-1 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 -mb-px transition-colors whitespace-nowrap text-sm md:text-base ${
                   activeChart === tab.id 
                     ? 'border-b-2 border-black text-black' 
                     : 'text-gray-500 hover:text-black'
                 }`}
               >
-                <tab.icon className="text-sm" />
+                <tab.icon className="text-xs md:text-sm" />
                 <span>{tab.label}</span>
               </button>
             ))}
@@ -404,15 +441,21 @@ const Orders = () => {
 
           {/* Overview Tab */}
           {activeChart === 'overview' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-4 md:gap-6">
               {/* Revenue by Status */}
               <div>
-                <h3 className="text-sm font-semibold mb-4">Revenue by Order Status</h3>
-                <ResponsiveContainer width="100%" height={250}>
+                <h3 className="text-xs md:text-sm font-semibold mb-2 md:mb-4">Revenue by Order Status</h3>
+                <ResponsiveContainer width="100%" height={isMobile ? 200 : 250}>
                   <BarChart data={analyticsData.revenueStatusData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="status" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <XAxis 
+                      dataKey="status" 
+                      tick={{ fontSize: isMobile ? 9 : 11 }}
+                      angle={isMobile ? -45 : 0}
+                      textAnchor={isMobile ? "end" : "middle"}
+                      height={isMobile ? 60 : 30}
+                    />
+                    <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} width={isMobile ? 50 : 60} />
                     <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="revenue" fill="#000000" radius={[8, 8, 0, 0]} />
                   </BarChart>
@@ -421,12 +464,25 @@ const Orders = () => {
 
               {/* Top Cities */}
               <div>
-                <h3 className="text-sm font-semibold mb-4">Top 5 Cities by Orders</h3>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={analyticsData.topCities} layout="horizontal">
+                <h3 className="text-xs md:text-sm font-semibold mb-2 md:mb-4">Top Cities by Orders</h3>
+                <ResponsiveContainer width="100%" height={isMobile ? 180 : 250}>
+                  <BarChart 
+                    data={analyticsData.topCities} 
+                    layout={isMobile ? "vertical" : "horizontal"}
+                    margin={isMobile ? { left: 50 } : { left: 100 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="orders" tick={{ fontSize: 12 }} />
-                    <YAxis dataKey="city" type="category" tick={{ fontSize: 11 }} width={100} />
+                    {isMobile ? (
+                      <>
+                        <XAxis type="number" tick={{ fontSize: 10 }} />
+                        <YAxis dataKey="city" type="category" tick={{ fontSize: 9 }} width={45} />
+                      </>
+                    ) : (
+                      <>
+                        <XAxis dataKey="orders" tick={{ fontSize: 12 }} />
+                        <YAxis dataKey="city" type="category" tick={{ fontSize: 11 }} width={100} />
+                      </>
+                    )}
                     <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="orders" fill="#000000" radius={[0, 8, 8, 0]} />
                   </BarChart>
@@ -437,34 +493,62 @@ const Orders = () => {
 
           {/* Trends Tab */}
           {activeChart === 'trends' && (
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {/* Daily Orders & Revenue */}
               <div>
-                <h3 className="text-sm font-semibold mb-4">Daily Orders & Revenue (Last 30 Days)</h3>
-                <ResponsiveContainer width="100%" height={300}>
+                <h3 className="text-xs md:text-sm font-semibold mb-2 md:mb-4">
+                  {isMobile ? 'Weekly' : 'Daily'} Orders & Revenue
+                </h3>
+                <ResponsiveContainer width="100%" height={isMobile ? 200 : 300}>
                   <ComposedChart data={analyticsData.dailyTrends}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                    <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: isMobile ? 9 : 10 }}
+                      angle={isMobile ? -45 : 0}
+                      textAnchor={isMobile ? "end" : "middle"}
+                      height={isMobile ? 50 : 30}
+                    />
+                    <YAxis yAxisId="left" tick={{ fontSize: isMobile ? 10 : 12 }} width={isMobile ? 35 : 50} />
+                    {!isMobile && <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />}
                     <Tooltip content={<CustomTooltip />} />
-                    <Legend />
+                    <Legend 
+                      wrapperStyle={{ fontSize: isMobile ? '10px' : '12px' }}
+                      iconSize={isMobile ? 10 : 18}
+                    />
                     <Bar yAxisId="left" dataKey="orders" fill="#808080" radius={[4, 4, 0, 0]} name="Orders" />
-                    <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#000000" strokeWidth={2} dot={{ fill: '#000000', r: 3 }} name="Revenue" />
+                    <Line 
+                      yAxisId={isMobile ? "left" : "right"} 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="#000000" 
+                      strokeWidth={isMobile ? 1.5 : 2} 
+                      dot={{ fill: '#000000', r: isMobile ? 2 : 3 }} 
+                      name="Revenue" 
+                    />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
 
               {/* Monthly Revenue */}
               <div>
-                <h3 className="text-sm font-semibold mb-4">Monthly Revenue Trend (Last 6 Months)</h3>
-                <ResponsiveContainer width="100%" height={250}>
+                <h3 className="text-xs md:text-sm font-semibold mb-2 md:mb-4">
+                  Monthly Revenue Trend
+                </h3>
+                <ResponsiveContainer width="100%" height={isMobile ? 180 : 250}>
                   <AreaChart data={analyticsData.monthlyRevenue}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <XAxis dataKey="month" tick={{ fontSize: isMobile ? 10 : 12 }} />
+                    <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} width={isMobile ? 45 : 60} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Area type="monotone" dataKey="revenue" stroke="#000000" fill="#000000" fillOpacity={0.2} name="Revenue" />
+                    <Area 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="#000000" 
+                      fill="#000000" 
+                      fillOpacity={0.2} 
+                      name="Revenue" 
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -473,19 +557,19 @@ const Orders = () => {
 
           {/* Distribution Tab */}
           {activeChart === 'distribution' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {/* Status Distribution Pie */}
               <div>
-                <h3 className="text-sm font-semibold mb-4">Order Status Distribution</h3>
-                <ResponsiveContainer width="100%" height={300}>
+                <h3 className="text-xs md:text-sm font-semibold mb-2 md:mb-4">Order Status Distribution</h3>
+                <ResponsiveContainer width="100%" height={isMobile ? 220 : 300}>
                   <PieChart>
                     <Pie
                       data={analyticsData.statusDistribution}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percentage }) => `${name} (${percentage}%)`}
-                      outerRadius={80}
+                      label={isMobile ? false : ({ name, percentage }) => `${name} (${percentage}%)`}
+                      outerRadius={isMobile ? 60 : 80}
                       fill="#000000"
                       dataKey="value"
                     >
@@ -496,22 +580,36 @@ const Orders = () => {
                     <Tooltip content={<CustomTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
+                {/* Mobile Legend */}
+                {isMobile && (
+                  <div className="flex flex-wrap gap-2 mt-2 text-xs">
+                    {analyticsData.statusDistribution.map((item, index) => (
+                      <div key={index} className="flex items-center gap-1">
+                        <div 
+                          className="w-3 h-3 rounded"
+                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                        />
+                        <span>{item.name} ({item.percentage}%)</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Payment Method Distribution */}
               <div>
-                <h3 className="text-sm font-semibold mb-4">Payment Method Distribution</h3>
-                <ResponsiveContainer width="100%" height={300}>
+                <h3 className="text-xs md:text-sm font-semibold mb-2 md:mb-4">Payment Methods</h3>
+                <ResponsiveContainer width="100%" height={isMobile ? 220 : 300}>
                   <PieChart>
                     <Pie
                       data={analyticsData.paymentData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={40}
-                      outerRadius={80}
+                      innerRadius={isMobile ? 30 : 40}
+                      outerRadius={isMobile ? 60 : 80}
                       fill="#000000"
                       dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}`}
+                      label={({ value }) => value}
                     >
                       {analyticsData.paymentData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -520,16 +618,36 @@ const Orders = () => {
                     <Tooltip content={<CustomTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
+                {/* Mobile Legend */}
+                {isMobile && (
+                  <div className="flex flex-wrap gap-2 mt-2 text-xs justify-center">
+                    {analyticsData.paymentData.map((item, index) => (
+                      <div key={index} className="flex items-center gap-1">
+                        <div 
+                          className="w-3 h-3 rounded"
+                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                        />
+                        <span>{item.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Average Order Value by Status */}
-              <div className="lg:col-span-2">
-                <h3 className="text-sm font-semibold mb-4">Average Order Value by Status</h3>
-                <ResponsiveContainer width="100%" height={200}>
+              {/* Average Order Value by Status - Full width on mobile */}
+              <div className="md:col-span-2">
+                <h3 className="text-xs md:text-sm font-semibold mb-2 md:mb-4">Average Order Value by Status</h3>
+                <ResponsiveContainer width="100%" height={isMobile ? 150 : 200}>
                   <BarChart data={analyticsData.avgOrderByStatus}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="status" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <XAxis 
+                      dataKey="status" 
+                      tick={{ fontSize: isMobile ? 9 : 11 }}
+                      angle={isMobile ? -45 : 0}
+                      textAnchor={isMobile ? "end" : "middle"}
+                      height={isMobile ? 50 : 30}
+                    />
+                    <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} width={isMobile ? 45 : 60} />
                     <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="avgValue" fill="#404040" radius={[8, 8, 0, 0]} name="Avg Value" />
                   </BarChart>
@@ -540,38 +658,40 @@ const Orders = () => {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-2xl font-bold">{stats.totalOrders}</p>
-          <p className="text-sm text-gray-600">Total Orders</p>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4">
+          <p className="text-lg md:text-2xl font-bold">{stats.totalOrders}</p>
+          <p className="text-[10px] md:text-sm text-gray-600">Total Orders</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</p>
-          <p className="text-sm text-gray-600">Revenue</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4">
+          <p className="text-lg md:text-2xl font-bold">
+            {isMobile ? formatCurrencyShort(stats.totalRevenue) : formatCurrency(stats.totalRevenue)}
+          </p>
+          <p className="text-[10px] md:text-sm text-gray-600">Revenue</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-2xl font-bold">{stats.pendingOrders}</p>
-          <p className="text-sm text-gray-600">Pending</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4">
+          <p className="text-lg md:text-2xl font-bold">{stats.pendingOrders}</p>
+          <p className="text-[10px] md:text-sm text-gray-600">Pending</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-2xl font-bold">{stats.deliveredOrders}</p>
-          <p className="text-sm text-gray-600">Delivered</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4">
+          <p className="text-lg md:text-2xl font-bold">{stats.deliveredOrders}</p>
+          <p className="text-[10px] md:text-sm text-gray-600">Delivered</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-        <div className="flex gap-4">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 mb-4 md:mb-6">
+        <div className="flex flex-col gap-3 md:gap-4">
           {/* Search */}
-          <div className="flex-1 relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="relative">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm md:text-base" />
             <input
               type="text"
-              placeholder="Search by customer, phone, city..."
+              placeholder={isMobile ? "Search orders..." : "Search by customer, phone, city..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
+              className="w-full pl-9 md:pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black text-sm md:text-base"
             />
           </div>
 
@@ -579,7 +699,7 @@ const Orders = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
+            className="px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black text-sm md:text-base"
           >
             <option value="All">All Status</option>
             <option value="Order Placed">Order Placed</option>
@@ -593,13 +713,13 @@ const Orders = () => {
 
       {/* Orders List */}
       {loading ? (
-        <div className="text-center py-12">Loading...</div>
+        <div className="text-center py-12 text-sm md:text-base">Loading...</div>
       ) : filteredOrders.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <p className="text-gray-600">No orders found</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-8 md:p-12 text-center">
+          <p className="text-gray-600 text-sm md:text-base">No orders found</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {filteredOrders.map((order) => {
             const customerName = `${order.address?.firstName || ""} ${order.address?.lastName || ""}`.trim() || "Unknown";
             const isExpanded = expandedOrders.has(order._id);
@@ -607,59 +727,64 @@ const Orders = () => {
             return (
               <div key={order._id} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 {/* Order Header */}
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-bold">{customerName}</h3>
-                        <span className={`px-3 py-1 rounded-lg text-sm font-medium ${statusColors[order.status] || "bg-gray-100"}`}>
+                <div className="p-3 md:p-4">
+                  <div className="flex items-start justify-between gap-2 md:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-2">
+                        <h3 className="text-base md:text-lg font-bold truncate">{customerName}</h3>
+                        <span className={`inline-block px-2 py-0.5 md:px-3 md:py-1 rounded-lg text-xs md:text-sm font-medium ${statusColors[order.status] || "bg-gray-100"}`}>
                           {order.status}
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <FiCalendar className="text-gray-400" />
-                          <span>{formatDate(order.date)}</span>
+                      <div className="grid grid-cols-2 gap-2 md:gap-3 text-xs md:text-sm">
+                        <div className="flex items-center gap-1 md:gap-2">
+                          <FiCalendar className="text-gray-400 flex-shrink-0 text-xs md:text-sm" />
+                          <span className="truncate">{formatDate(order.date)}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <FiPhone className="text-gray-400" />
-                          <span>{order.address?.phone || "N/A"}</span>
+                        <div className="flex items-center gap-1 md:gap-2">
+                          <FiPhone className="text-gray-400 flex-shrink-0 text-xs md:text-sm" />
+                          <span className="truncate">{order.address?.phone || "N/A"}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <FiMapPin className="text-gray-400" />
-                          <span>{order.address?.city || "N/A"}</span>
+                        <div className="flex items-center gap-1 md:gap-2">
+                          <FiMapPin className="text-gray-400 flex-shrink-0 text-xs md:text-sm" />
+                          <span className="truncate">{order.address?.city || "N/A"}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <FiDollarSign className="text-gray-400" />
-                          <span className="font-bold">{formatCurrency(order.amount || 0)}</span>
+                        <div className="flex items-center gap-1 md:gap-2">
+                          <FiDollarSign className="text-gray-400 flex-shrink-0 text-xs md:text-sm" />
+                          <span className="font-bold truncate">
+                            {isMobile ? formatCurrencyShort(order.amount || 0) : formatCurrency(order.amount || 0)}
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     <button
                       onClick={() => toggleOrderExpansion(order._id)}
-                      className="p-2 hover:bg-gray-100 rounded-lg"
+                      className="p-1.5 md:p-2 hover:bg-gray-100 rounded-lg"
                     >
-                      {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+                      {isExpanded ? <FiChevronUp className="text-sm md:text-base" /> : <FiChevronDown className="text-sm md:text-base" />}
                     </button>
                   </div>
                 </div>
 
                 {/* Expanded Details */}
                 {isExpanded && (
-                  <div className="border-t border-gray-200 bg-gray-50 p-4 space-y-4">
+                  <div className="border-t border-gray-200 bg-gray-50 p-3 md:p-4 space-y-3 md:space-y-4">
                     {/* Address */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                      <h4 className="font-semibold mb-3">Delivery Address</h4>
-                      <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4">
+                      <h4 className="font-semibold mb-2 md:mb-3 text-sm md:text-base">Delivery Address</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 text-xs md:text-sm">
                         <div>
-                          <p className="text-gray-600">Email</p>
-                          <p className="font-medium">{order.address?.email || "N/A"}</p>
+                          <p className="text-gray-600 flex items-center gap-1">
+                            <FiMail className="text-xs" />
+                            Email
+                          </p>
+                          <p className="font-medium truncate">{order.address?.email || "N/A"}</p>
                         </div>
                         <div>
                           <p className="text-gray-600">Street</p>
-                          <p className="font-medium">{order.address?.street || "N/A"}</p>
+                          <p className="font-medium truncate">{order.address?.street || "N/A"}</p>
                         </div>
                         <div>
                           <p className="text-gray-600">State</p>
@@ -673,34 +798,40 @@ const Orders = () => {
                     </div>
 
                     {/* Items */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                      <h4 className="font-semibold mb-3">Items ({order.items?.length || 0})</h4>
+                    <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4">
+                      <h4 className="font-semibold mb-2 md:mb-3 text-sm md:text-base">Items ({order.items?.length || 0})</h4>
                       <div className="space-y-2">
                         {order.items?.map((item, i) => (
-                          <div key={i} className="flex items-center gap-3 p-2 bg-gray-50 rounded">
+                          <div key={i} className="flex items-center gap-2 md:gap-3 p-2 bg-gray-50 rounded">
                             {item.image?.[0] && (
-                              <img src={item.image[0]} alt={item.name} className="w-12 h-12 object-cover rounded" />
+                              <img 
+                                src={item.image[0]} 
+                                alt={item.name} 
+                                className="w-10 h-10 md:w-12 md:h-12 object-cover rounded flex-shrink-0" 
+                              />
                             )}
-                            <div className="flex-1">
-                              <p className="font-medium">{item.name}</p>
-                              <p className="text-sm text-gray-600">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-xs md:text-sm truncate">{item.name}</p>
+                              <p className="text-[10px] md:text-xs text-gray-600">
                                 Qty: {item.quantity} {item.size && `• Size: ${item.size}`}
                               </p>
                             </div>
-                            <p className="font-bold">{formatCurrency(item.price)}</p>
+                            <p className="font-bold text-xs md:text-sm">
+                              {isMobile ? formatCurrencyShort(item.price) : formatCurrency(item.price)}
+                            </p>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-3">
+                    <div className="flex gap-2 md:gap-3">
                       <div className="flex-1">
                         <select
                           onChange={(event) => updateStatus(event, order._id)}
                           value={order.status}
                           disabled={updatingId === order._id}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100"
+                          className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100 text-sm md:text-base"
                         >
                           <option value="Order Placed">Order Placed</option>
                           <option value="Packing">Packing</option>
@@ -712,9 +843,9 @@ const Orders = () => {
                       <button
                         onClick={() => setDeleteConfirm(order)}
                         disabled={updatingId === order._id}
-                        className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-300"
+                        className="px-3 md:px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-300"
                       >
-                        <FiTrash2 />
+                        <FiTrash2 className="text-sm md:text-base" />
                       </button>
                     </div>
                   </div>
@@ -728,23 +859,23 @@ const Orders = () => {
       {/* Delete Modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-xl font-bold mb-2">Delete Order?</h3>
-            <p className="text-gray-600 mb-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-4 md:p-6">
+            <h3 className="text-lg md:text-xl font-bold mb-2">Delete Order?</h3>
+            <p className="text-sm md:text-base text-gray-600 mb-4">
               Are you sure you want to delete this order for{" "}
               {`${deleteConfirm.address?.firstName || ""} ${deleteConfirm.address?.lastName || ""}`.trim()}?
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="flex-1 px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
+                className="flex-1 px-3 md:px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm md:text-base"
               >
                 Cancel
               </button>
               <button
                 onClick={() => deleteOrder(deleteConfirm._id)}
                 disabled={updatingId === deleteConfirm._id}
-                className="flex-1 px-4 py-2 bg-black text-white rounded hover:bg-gray-800 disabled:bg-gray-300"
+                className="flex-1 px-3 md:px-4 py-2 bg-black text-white rounded hover:bg-gray-800 disabled:bg-gray-300 text-sm md:text-base"
               >
                 {updatingId === deleteConfirm._id ? "Deleting..." : "Delete"}
               </button>
