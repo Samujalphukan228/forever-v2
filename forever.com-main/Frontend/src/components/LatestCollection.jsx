@@ -1,119 +1,76 @@
-import React, { useContext, useEffect, useState, useRef } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import Title from './Title'
 import ProductItem from './ProductItem'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
-
-gsap.registerPlugin(ScrollTrigger)
-
 
 const LatestCollection = () => {
     const { products } = useContext(ShopContext)
     const [latestProducts, setLatestProducts] = useState([])
-    const sectionRef = useRef(null)
-    const titleRef = useRef(null)
-    const descRef = useRef(null)
-    const gridRef = useRef(null)
-    const itemsRef = useRef([])
+    const [isVisible, setIsVisible] = useState(false)
 
     useEffect(() => {
         setLatestProducts(products.slice(0, 10))
     }, [products])
 
-    
+    // Intersection Observer for entrance animation
     useEffect(() => {
-        if (latestProducts.length === 0) return
-
-        const ctx = gsap.context(() => {
-            // Set initial states
-            gsap.set([titleRef.current, descRef.current], {
-                opacity: 0,
-                y: 30,
-            })
-
-            gsap.set(itemsRef.current, {
-                opacity: 0,
-                y: 40,
-            })
-
-            // Create timeline
-            const tl = gsap.timeline({
-                scrollTrigger: {
-                    trigger: sectionRef.current,
-                    start: "top 80%",
-                    end: "top 50%",
-                    toggleActions: "play none none none",
-                },
-                defaults: {
-                    ease: "power3.out",
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true)
                 }
-            })
+            },
+            { threshold: 0.1 }
+        )
 
-            // Animate in sequence
-            tl.to(titleRef.current, {
-                opacity: 1,
-                y: 0,
-                duration: 1,
-            })
-            .to(descRef.current, {
-                opacity: 1,
-                y: 0,
-                duration: 0.8,
-            }, "-=0.6")
-            .to(itemsRef.current, {
-                opacity: 1,
-                y: 0,
-                duration: 0.8,
-                stagger: 0.08,
-            }, "-=0.4")
+        const element = document.getElementById('latest-collection')
+        if (element) observer.observe(element)
 
-        }, sectionRef)
-
-        return () => ctx.revert()
-    }, [latestProducts])
+        return () => {
+            if (element) observer.unobserve(element)
+        }
+    }, [])
 
     return (
         <section 
-            ref={sectionRef}
-            className='py-16 lg:py-24 max-w-[1800px] mx-auto'
+            id="latest-collection"
+            className='py-16 lg:py-24 px-4 sm:px-6 lg:px-12'
         >
-            {/* Header */}
-            <div className='text-center mb-12 lg:mb-16'>
-                <div ref={titleRef}>
+            <div className='max-w-[1600px] mx-auto'>
+                {/* Header */}
+                <div className={`text-center mb-12 lg:mb-16 transition-all duration-1000 ${
+                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                }`}>
                     <Title text1={'LATEST'} text2={'COLLECTION'} />
+                    <p className='max-w-2xl mx-auto mt-4 text-sm lg:text-base text-gray-500 font-light tracking-wide'>
+                        Discover our newest pieces crafted with elegance and designed to elevate every look.
+                    </p>
                 </div>
-                <p 
-                    ref={descRef}
-                    className='max-w-2xl mx-auto mt-4 text-sm lg:text-base text-gray-500 font-light tracking-wide'
-                >
-                    Discover our newest pieces crafted with elegance and designed to elevate every look.
-                </p>
-            </div>
 
-            {/* Products Grid */}
-            <div 
-                ref={gridRef}
-                className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8'
-            >
-                {latestProducts.map((item, index) => (
-                    <div 
-                        key={item._id} 
-                        ref={(el) => (itemsRef.current[index] = el)}
-                    >
-                        <ProductItem 
-                            id={item._id} 
-                            image={item.image} 
-                            name={item.name} 
-                            price={item.price} 
-                        />
-                    </div>
-                ))}
+                {/* Products Grid */}
+                <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6 lg:gap-8'>
+                    {latestProducts.map((item, index) => (
+                        <div 
+                            key={item._id}
+                            className={`transition-all duration-700 ${
+                                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+                            }`}
+                            style={{
+                                transitionDelay: isVisible ? `${Math.min(index * 50, 400)}ms` : '0ms'
+                            }}
+                        >
+                            <ProductItem 
+                                id={item._id} 
+                                image={item.image} 
+                                name={item.name} 
+                                price={item.price} 
+                            />
+                        </div>
+                    ))}
+                </div>
             </div>
         </section>
     )
 }
-
 
 export default LatestCollection

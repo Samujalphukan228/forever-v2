@@ -19,7 +19,7 @@ import ScrollToTop from "./components/ScrollToTop";
 
 const App = () => {
   return (
-    <>
+    < div className="bg-gray-50">
       <ToastContainer />
       {/* Navbar and SearchBar span full width */}
       <NavBar />
@@ -45,7 +45,7 @@ const App = () => {
       </div>
 
       <Footer />
-    </>
+    </div>
   );
 };
 
