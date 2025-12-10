@@ -4,6 +4,7 @@ import { assets } from '../assets/assets';
 import Title from '../components/Title';
 import NewsletterBox from '../components/NewaLetterBox';
 
+
 const About = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [visibleSections, setVisibleSections] = useState({
